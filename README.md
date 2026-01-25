@@ -186,25 +186,24 @@ REACT_APP_FRONTEND_PORT=3000
 
 ```
 ai_alive/
-├── README.md              # 项目说明文档
-├── requirements.txt       # Python 依赖（固定版本）
-├── start_app.py          # 主启动脚本（推荐）
-├── start_app.bat         # Windows 快速启动
-├── start_app.sh          # Linux/Mac 快速启动
-├── scripts/              # 辅助脚本
-│   └── create_venv.bat   # 虚拟环境创建脚本
-├── tools/                # 工具脚本
-│   └── check_ports.py    # 端口检测工具
-├── docs/                 # 项目文档
-├── shelter_app/          # FastAPI 后端应用
-│   └── run.py           # 后端启动入口
-├── shelter_core/         # 核心业务逻辑
-├── shelter-ui/           # React 前端应用
-│   ├── .env             # 前端环境配置
-│   ├── package.json      # 前端依赖配置
-│   └── src/             # 前端源代码
-├── config/               # 配置文件
-└── logs/                 # 日志文件目录
+├── README.md                 # 项目说明文档
+├── requirements.txt          # Python 依赖（固定版本）
+├── start_app.py             # 主启动脚本（推荐）
+├── scripts/                # 辅助脚本
+│   └── create_venv.bat     # 虚拟环境创建脚本
+├── tools/                  # 工具脚本
+│   └── check_ports.py      # 端口检测工具
+├── docs/                   # 项目文档
+├── shelter_app/            # FastAPI 后端应用
+│   └── run.py             # 后端启动入口
+├── shelter_core/            # 核心业务逻辑
+├── shelter-ui/              # React 前端应用
+│   ├── .env.example        # 前端环境配置示例
+│   ├── package.json        # 前端依赖配置
+│   └── src/              # 前端源代码
+├── config/                 # 配置文件
+│   └── ai_config.example.yaml  # 后端配置示例
+└── logs/                   # 日志文件目录
 ```
 
 ## 功能特性
