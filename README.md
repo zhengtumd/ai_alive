@@ -31,64 +31,34 @@
 
 ## 快速开始
 
-### 一键启动（推荐）
+### 启动应用（推荐）
 
 启动脚本会自动检测环境、安装依赖并启动应用：
-
-```bash
-# Windows
-start_app.bat
-
-# Linux/Mac
-chmod +x start_app.sh
-./start_app.sh
-```
-
-或者直接使用 Python 脚本：
 
 ```bash
 python start_app.py
 ```
 
+### 不同启动模式
+
+```bash
+# 正常模式：自动构建前端，通过后端8000端口访问
+python start_app.py
+
+# 开发模式：跳过构建，需要手动运行 npm start（3000端口）
+python start_app.py --dev
+
+# 调试模式：跳过构建，详细日志输出
+python start_app.py --debug
+```
+
+> 💡 详细说明请查看 [启动模式文档](docs/START_MODES.md)
+
 ### 手动启动
 
-如果需要手动控制每个步骤，可以按照以下步骤：
+如果需要手动控制每个步骤，建议先配置环境变量：
 
-#### 1. 创建虚拟环境
-
-```bash
-# Windows
-python -m venv .venv
-
-# Linux/Mac
-python3 -m venv .venv
-```
-
-#### 2. 激活虚拟环境
-
-```bash
-# Windows
-.venv\Scripts\activate
-
-# Linux/Mac
-source .venv/bin/activate
-```
-
-#### 3. 安装 Python 依赖
-
-```bash
-pip install -r requirements.txt
-```
-
-#### 4. 安装前端依赖
-
-```bash
-cd shelter-ui
-npm install
-cd ..
-```
-
-#### 5. 配置环境变量
+#### 1. 配置环境变量（重要！）
 
 ```bash
 # 复制前端环境配置示例
@@ -99,6 +69,40 @@ cp config/ai_config.example.yaml config/ai_config.yaml
 
 # 编辑 config/ai_config.yaml，填入你的 API 密钥
 # shelter-ui/.env 使用默认配置即可（通常无需修改）
+```
+
+#### 2. 创建虚拟环境
+
+```bash
+# Windows
+python -m venv .venv
+
+# Linux/Mac
+python3 -m venv .venv
+```
+
+#### 3. 激活虚拟环境
+
+```bash
+# Windows
+.venv\Scripts\activate
+
+# Linux/Mac
+source .venv/bin/activate
+```
+
+#### 4. 安装 Python 依赖
+
+```bash
+pip install -r requirements.txt
+```
+
+#### 5. 安装前端依赖
+
+```bash
+cd shelter-ui
+npm install
+cd ..
 ```
 
 #### 6. 启动应用
