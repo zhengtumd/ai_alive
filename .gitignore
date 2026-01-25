@@ -35,10 +35,12 @@ yarn-error.log*
 
 # React build
 shelter-ui/build/
+shelter-ui/.env
 shelter-ui/.env.local
 shelter-ui/.env.development.local
 shelter-ui/.env.test.local
 shelter-ui/.env.production.local
+!shelter-ui/.env.example
 
 # OS
 .DS_Store
@@ -55,3 +57,4 @@ config/*_local.yaml
 *_local.yaml
 .env
 *.env.local
+!shelter-ui/.env.example
