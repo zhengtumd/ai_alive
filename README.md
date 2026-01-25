@@ -85,21 +85,20 @@ pip install -r requirements.txt
 ```bash
 cd shelter-ui
 npm install
+cd ..
 ```
 
 #### 5. 配置环境变量
 
 ```bash
 # 复制前端环境配置示例
-cd shelter-ui
-cp .env.example .env
+cp shelter-ui/.env.example shelter-ui/.env
 
 # 复制后端配置示例
-cd ..
 cp config/ai_config.example.yaml config/ai_config.yaml
 
 # 编辑 config/ai_config.yaml，填入你的 API 密钥
-# 编辑 shelter-ui/.env 配置端口（默认即可）
+# shelter-ui/.env 使用默认配置即可（通常无需修改）
 ```
 
 #### 6. 启动应用
@@ -176,6 +175,8 @@ REACT_APP_API_URL=http://localhost:8000
 REACT_APP_BACKEND_PORT=8000
 REACT_APP_FRONTEND_PORT=3000
 ```
+
+> ⚠️ 注意：正常模式下前端通过后端 8000 端口服务，此时 `REACT_APP_API_URL` 应为空字符串或相对路径。
 
 ## 项目结构
 
@@ -254,6 +255,8 @@ rm -rf node_modules package-lock.json  # Windows: rmdir /s /q node_modules
 npm install
 ```
 
+> 💡 Windows 用户注意：使用 `rmdir /s /q node_modules` 删除目录
+
 ### 构建失败
 
 如果 `npm run build` 失败：
@@ -266,6 +269,8 @@ rm -rf node_modules/.cache build  # Windows: rmdir /s /q node_modules\.cache bui
 # 重新构建
 npm run build
 ```
+
+> 💡 Windows 用户注意：使用 `rmdir /s /q` 删除目录
 
 ### 端口被占用
 
