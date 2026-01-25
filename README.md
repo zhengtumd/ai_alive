@@ -85,10 +85,24 @@ pip install -r requirements.txt
 ```bash
 cd shelter-ui
 npm install
-cd ..
 ```
 
-#### 5. 启动应用
+#### 5. 配置环境变量
+
+```bash
+# 复制前端环境配置示例
+cd shelter-ui
+cp .env.example .env
+
+# 复制后端配置示例
+cd ..
+cp config/ai_config.example.yaml config/ai_config.yaml
+
+# 编辑 config/ai_config.yaml，填入你的 API 密钥
+# 编辑 shelter-ui/.env 配置端口（默认即可）
+```
+
+#### 6. 启动应用
 
 使用启动脚本：
 ```bash
