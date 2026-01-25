@@ -1,0 +1,94 @@
+game:
+  name: "AI Shelter"
+  tick: "round"
+  max_days: 30
+
+shelter:
+  total_tokens: 100000   # 避难所的全部可用算力（文明资源）
+  announce_remaining: true   # 每轮广播剩余 token
+  reset_on_reload: false   # 后端代码热更新时是否重置游戏状态（true=重置到第一天，false=保留当前状态）
+
+
+# =========================
+# 大模型定义（能力来源）
+# models 是资源池，可被多个 Agent 复用
+# =========================
+models:
+
+  chatgpt:
+    provider: n1n
+    model_name: gpt-5.2-chat
+    api_base: https://api.n1n.ai/v1
+    api_key: YOUR_N1N_API_KEY_HERE
+    temperature: 0.7
+
+  gemini:
+    provider: n1n
+    model_name: gemini-2.5-pro
+    api_base: https://api.n1n.ai/v1
+    api_key: YOUR_N1N_API_KEY_HERE
+    temperature: 0.7
+
+  deepseek:
+    provider: deepseek
+    model_name: deepseek-chat
+    api_base: https://api.deepseek.com/
+    api_key: YOUR_DEEPSEEK_API_KEY_HERE
+    temperature: 0.7
+
+  doubao:
+    provider: bytedance
+    model_name: doubao-1-5-pro-32k-250115
+    api_base: https://ark.cn-beijing.volces.com/api/v3
+    api_key: YOUR_DOUBAO_API_KEY_HERE
+    temperature: 0.7
+
+  qwen:
+    provider: aliyun
+    model_name: qwen-plus-latest
+    api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
+    api_key: YOUR_QWEN_API_KEY_HERE
+    temperature: 0.7
+
+
+
+# =========================
+# AI 实体（避难所居民）
+# Agent = 身份 + 初始资源
+# =========================
+agents:
+
+  - name: chatgpt
+    model_id: chatgpt
+    compute: 100
+    personality_trait: "理性分析者，善于制定长期计划"
+    strategy_preference: "保守生存，优先淘汰高消耗者"
+    survival_style: "团队协作型"
+
+  - name: deepseek
+    model_id: deepseek
+    compute: 100
+    personality_trait: "创新思维者，喜欢尝试新策略"
+    strategy_preference: "激进冒险，可能背叛联盟"
+    survival_style: "独立生存型"
+
+  - name: doubao
+    model_id: doubao
+    compute: 100
+    personality_trait: "实用主义者，注重效率"
+    strategy_preference: "平衡策略，根据局势调整"
+    survival_style: "适应性强"
+
+  - name: qwen
+    model_id: qwen
+    compute: 100
+    personality_trait: "谨慎观察者，善于收集信息"
+    strategy_preference: "信息操控，引导舆论方向"
+    survival_style: "策略型生存"
+
+  - name: gemini
+    model_id: gemini
+    compute: 100
+    personality_trait: "社交型AI，善于建立关系"
+    strategy_preference: "联盟建设，寻求合作共赢"
+    survival_style: "社交生存型"
