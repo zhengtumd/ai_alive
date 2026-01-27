@@ -20,12 +20,15 @@ if __name__ == "__main__":
     log_level = 'debug' if debug_mode else 'info'
     reload = not no_reload
     
-    print(f"启动后端服务 - Debug模式: {debug_mode}, 热重载: {reload}")
+    # 端口配置：使用环境变量或默认值
+    backend_port = int(os.getenv("BACKEND_PORT", "8000"))
+    
+    print(f"启动后端服务 - Debug模式: {debug_mode}, 热重载: {reload}, 端口: {backend_port}")
     
     uvicorn.run(
         "shelter_app.app:app", 
         host="0.0.0.0", 
-        port=8000, 
+        port=backend_port, 
         reload=reload,
         log_level=log_level
     )

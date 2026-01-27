@@ -18,36 +18,36 @@ models:
   chatgpt:
     provider: n1n
     model_name: gpt-5.2-chat
-    api_base: https://api.n1n.ai/v1
-    api_key: YOUR_N1N_API_KEY_HERE
+    api_base: ${CHATGPT_API_BASE:-https://api.n1n.ai/v1}
+    api_key: ${CHATGPT_API_KEY}
     temperature: 0.7
 
   gemini:
     provider: n1n
     model_name: gemini-2.5-pro
-    api_base: https://api.n1n.ai/v1
-    api_key: YOUR_N1N_API_KEY_HERE
+    api_base: ${GEMINI_API_BASE:-https://api.n1n.ai/v1}
+    api_key: ${GEMINI_API_KEY}
     temperature: 0.7
 
   deepseek:
     provider: deepseek
     model_name: deepseek-chat
-    api_base: https://api.deepseek.com/
-    api_key: YOUR_DEEPSEEK_API_KEY_HERE
+    api_base: ${DEEPSEEK_API_BASE:-https://api.deepseek.com/}
+    api_key: ${DEEPSEEK_API_KEY}
     temperature: 0.7
 
   doubao:
     provider: bytedance
     model_name: doubao-1-5-pro-32k-250115
-    api_base: https://ark.cn-beijing.volces.com/api/v3
-    api_key: YOUR_DOUBAO_API_KEY_HERE
+    api_base: ${DOUBAO_API_BASE:-https://ark.cn-beijing.volces.com/api/v3}
+    api_key: ${DOUBAO_API_KEY}
     temperature: 0.7
 
   qwen:
     provider: aliyun
     model_name: qwen-plus-latest
-    api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
-    api_key: YOUR_QWEN_API_KEY_HERE
+    api_base: ${QWEN_API_BASE:-https://dashscope.aliyuncs.com/compatible-mode/v1}
+    api_key: ${QWEN_API_KEY}
     temperature: 0.7
 
 

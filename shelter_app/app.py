@@ -9,6 +9,8 @@ from starlette.staticfiles import StaticFiles as StarletteStaticFiles
 from contextlib import asynccontextmanager
 from pathlib import Path
 import yaml
+import os
+import re
 from shelter_core.shelter import Shelter
 from shelter_core.agent import AIAgent
 from shelter_core.model_wrapper import OpenAIModel
@@ -68,10 +70,37 @@ def restore_shelter_state(shelter: Shelter, state: dict):
             agent.last_output = agent_state["last_output"]
 
 
+def expand_env_vars(obj):
+    """
+    递归展开对象中的环境变量（${VAR_NAME} 格式）
+    
+    环境变量优先级高于配置文件中的硬编码值。
+    如果环境变量未设置，则使用配置文件中的默认值（${} 会被替换为空字符串）。
+    """
+    if isinstance(obj, dict):
+        return {k: expand_env_vars(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [expand_env_vars(item) for item in obj]
+    elif isinstance(obj, str):
+        # 匹配 ${VAR_NAME} 格式
+        def replace_env_var(match):
+            var_name = match.group(1)
+            env_value = os.getenv(var_name)
+            if env_value is None:
+                print(f"警告: 环境变量 {var_name} 未设置，将使用配置文件中的默认值（或空字符串）")
+            return env_value if env_value is not None else ""
+        return re.sub(r'\$\{([^}]+)\}', replace_env_var, obj)
+    else:
+        return obj
+
+
 def init_shelter(config_path: str = "config/ai_config.yaml") -> Shelter:
     """初始化 Shelter 实例"""
     with open(config_path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
+
+    # 展开环境变量
+    config = expand_env_vars(config)
 
     # 初始化模型
     models = {mid: OpenAIModel(cfg) for mid, cfg in config["models"].items()}

@@ -1,8 +1,12 @@
-# 启动模式说明
+# 开发指南
 
-## 快速启动
+本文档详细说明 AI Shelter 的开发模式、调试技巧和代码结构。
 
-### 正常启动（推荐）
+## 启动模式说明
+
+### 快速启动
+
+#### 正常启动（推荐）
 ```cmd
 python start_app.py
 ```
@@ -11,7 +15,7 @@ python start_app.py
 - 前端热重载：❌ 不启用（使用构建后的静态文件）
 - 访问地址：http://localhost:8000
 
-### 前端开发模式
+#### 前端开发模式
 ```cmd
 python start_app.py --dev
 ```
@@ -25,7 +29,7 @@ npm start
 - 后端地址：http://localhost:8000
 - 前端地址：http://localhost:3000
 
-### 完整调试模式
+#### 完整调试模式
 ```cmd
 python start_app.py --debug
 ```
@@ -107,6 +111,93 @@ npm start
 ```
 适合：追踪问题、查看详细日志
 
+## 代码结构
+
+### 后端结构
+```
+shelter_app/
+├── app.py          # FastAPI主应用
+├── run.py          # 启动脚本
+├── models/         # 数据模型
+├── services/       # 业务逻辑
+└── utils/          # 工具函数
+
+shelter_core/
+├── ai_models.py    # AI模型接口
+├── config.py       # 配置管理
+└── logger.py       # 日志管理
+```
+
+### 前端结构
+```
+shelter-ui/
+├── src/
+│   ├── components/ # React组件
+│   ├── pages/      # 页面组件
+│   ├── hooks/      # 自定义Hooks
+│   ├── utils/      # 工具函数
+│   └── App.js      # 主应用组件
+├── public/         # 静态资源
+└── package.json    # 依赖配置
+```
+
+## 开发工具
+
+### 端口检测工具
+```bash
+# 检测端口占用情况
+python tools/check_ports.py
+```
+
+### API重启工具
+```bash
+# 重启后端服务
+python tools/restart_api.py
+```
+
+### 环境变量检查
+```bash
+# 检查当前环境变量设置
+echo $BACKEND_PORT
+echo $FRONTEND_DEV_PORT
+```
+
+## 调试技巧
+
+### 后端调试
+
+#### 启用详细日志
+```python
+# 在开发模式下自动启用详细日志
+# 或手动设置日志级别
+import logging
+logging.basicConfig(level=logging.DEBUG)
+```
+
+#### API调试
+```bash
+# 测试API接口
+curl http://localhost:8000/status
+curl http://localhost:8000/api/chat
+```
+
+### 前端调试
+
+#### React开发者工具
+- 安装React Developer Tools浏览器插件
+- 查看组件树和状态变化
+
+#### 网络请求调试
+- 使用浏览器开发者工具查看网络请求
+- 检查API响应状态和内容
+
+#### 控制台调试
+```javascript
+// 在组件中添加调试日志
+console.log('组件状态:', state);
+console.log('API响应:', response);
+```
+
 ## 常见问题
 
 ### Q: 为什么前端修改没有生效？
@@ -136,3 +227,25 @@ npm start
 - **正常模式**：使用构建后的静态文件，每次启动自动重新构建
 - **开发模式**：使用React开发服务器，支持热重载，适合开发调试
 
+### Q: 如何查看后端日志？
+**A:**
+- 开发模式：日志直接输出到控制台
+- 生产模式：查看 `logs/` 目录下的日志文件
+- 调试模式：启用详细日志输出
+
+### Q: 如何修改端口配置？
+**A:** 通过环境变量设置：
+```bash
+# 设置后端端口
+export BACKEND_PORT=8080
+
+# 设置前端开发端口  
+export FRONTEND_DEV_PORT=3001
+```
+
+---
+
+**相关文档：**
+- [快速开始](quick_start.md) - 安装和基本使用
+- [配置说明](configuration.md) - 端口、环境变量等配置
+- [部署指南](deployment.md) - 服务器部署和Docker部署

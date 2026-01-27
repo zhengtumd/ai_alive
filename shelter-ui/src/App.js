@@ -10,8 +10,9 @@ import {
 } from "./components";
 
 // API 配置
-// 如果环境变量为空,使用空字符串(相对路径),否则使用完整URL
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+// 生产环境：使用空字符串（相对路径），自动使用当前域名
+// 开发环境：使用环境变量配置后端地址
+const API_URL = process.env.REACT_APP_API_URL || '';
 
 // 本地存储键名
 const LOCAL_STORAGE_KEYS = {

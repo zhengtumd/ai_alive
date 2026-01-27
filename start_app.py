@@ -95,14 +95,119 @@ def print_error(msg):
     sys.stdout.flush()
 
 
+def check_installation():
+    """检查是否已经完成安装"""
+    # 检查安装标记文件
+    install_marker = Path(".installed")
+    if install_marker.exists():
+        return True
+    
+    # 检查虚拟环境和依赖
+    venv_path = Path(".venv")
+    if not venv_path.exists():
+        return False
+    
+    # 检查Python依赖
+    try:
+        venv_python = venv_path / ("Scripts" if os.name == 'nt' else "bin") / ("python.exe" if os.name == 'nt' else "python")
+        result = subprocess.run([str(venv_python), "-c", "import fastapi, uvicorn, yaml"], 
+                              capture_output=True, check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+    
+    # 检查前端依赖
+    frontend_modules = Path("shelter-ui") / "node_modules"
+    if not frontend_modules.exists():
+        return False
+    
+    return True
+
+
+def mark_installed():
+    """标记为已安装"""
+    install_marker = Path(".installed")
+    install_marker.touch()
+    print_success("安装完成标记已设置")
+
+
+def install_dependencies():
+    """安装所有依赖和环境"""
+    print_header()
+    print_info("开始安装AI Shelter依赖和环境...")
+    
+    # 检查虚拟环境
+    print_info("检查虚拟环境...")
+    venv_path = Path(".venv")
+    if not venv_path.exists():
+        print_warning("虚拟环境不存在，正在创建...")
+        try:
+            subprocess.run([sys.executable, "-m", "venv", ".venv"], check=True)
+            print_success("虚拟环境创建成功！")
+        except subprocess.CalledProcessError:
+            print_error("创建虚拟环境失败！")
+            sys.exit(1)
+    else:
+        print_success("虚拟环境已存在")
+    
+    # 获取虚拟环境Python路径
+    if os.name == 'nt':  # Windows
+        venv_python = venv_path / "Scripts" / "python.exe"
+    else:  # Unix
+        venv_python = venv_path / "bin" / "python"
+    
+    # 安装Python依赖
+    print_info("安装Python依赖...")
+    try:
+        subprocess.run([str(venv_python), "-m", "pip", "install", "-r", "requirements.txt"], check=True)
+        print_success("Python依赖安装成功！")
+    except subprocess.CalledProcessError:
+        print_error("Python依赖安装失败！")
+        sys.exit(1)
+    
+    # 安装前端依赖
+    print_info("安装前端依赖...")
+    frontend_modules = Path("shelter-ui") / "node_modules"
+    if not frontend_modules.exists():
+        try:
+            if sys.platform == 'win32':
+                subprocess.run("npm install", cwd="shelter-ui", shell=True, check=True, encoding='gbk', errors='ignore')
+            else:
+                subprocess.run("npm install", cwd="shelter-ui", shell=True, check=True)
+            print_success("前端依赖安装成功！")
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            print_error(f"前端依赖安装失败: {e}")
+            print_error("请确保Node.js和npm已安装")
+            sys.exit(1)
+    else:
+        print_success("前端依赖已存在")
+    
+    # 设置安装标记
+    mark_installed()
+    print_success("所有依赖和环境安装完成！")
+
+
 def main():
 
+    # 解析命令行参数
+    if len(sys.argv) > 1 and sys.argv[1] == "install":
+        install_dependencies()
+        return
+
     print_header()
+
+    # 检查是否已安装
+    if not check_installation():
+        print_error("环境未安装！")
+        print_info("请先运行安装命令: python start_app.py install")
+        print_info("或手动安装依赖和环境")
+        sys.exit(1)
+    
+    print_success("检测到环境已安装，跳过安装步骤")
 
     # 用于存储子进程
     processes = []
 
-    # 解析命令行参数
+    # 解析其他命令行参数
     debug_mode = '--debug' in sys.argv
     dev_mode = '--dev' in sys.argv
 
@@ -112,86 +217,27 @@ def main():
         print_warning("前端开发模式已启用：React热重载")
 
     try:
-        # 检查后端端口
-        backend_port = 8000
-        print_info("Checking port 8000 availability...")
+        # 统一端口配置：使用环境变量或默认值
+        backend_port = int(os.getenv("BACKEND_PORT", "8000"))
+        frontend_dev_port = int(os.getenv("FRONTEND_DEV_PORT", "3000"))
+        
+        print_info(f"Checking port {backend_port} availability...")
         if not check_port(backend_port):
-            print_warning("Port 8000 is already in use!")
-            choice = input("Use alternative port 8001? [Y/n]: ").strip().lower()
+            print_warning(f"Port {backend_port} is already in use!")
+            choice = input(f"Use alternative port {backend_port + 1}? [Y/n]: ").strip().lower()
             if choice != 'n':
-                backend_port = 8001
+                backend_port = backend_port + 1
                 print_success(f"Using port {backend_port}")
             else:
-                print_warning("Trying with port 8000...")
-
-        # 检查虚拟环境
-        print_info("Checking virtual environment...")
-        venv_path = Path(".venv")
-        if not venv_path.exists():
-            print_error("Virtual environment not found!")
-            choice = input("Create virtual environment now? [Y/n]: ").strip().lower()
-            if choice != 'n':
-                print_info("Creating virtual environment...")
-                try:
-                    subprocess.run([sys.executable, "-m", "venv", ".venv"], check=True)
-                    print_success("Virtual environment created successfully!\n")
-                except subprocess.CalledProcessError:
-                    print_error("Failed to create virtual environment!")
-                    sys.exit(1)
-            else:
-                print_error("Cannot continue without virtual environment.")
-                sys.exit(1)
+                print_warning(f"Trying with port {backend_port}...")
 
         # 激活虚拟环境
-        print_success("Activating virtual environment...")
+        print_success("激活虚拟环境...")
+        venv_path = Path(".venv")
         if os.name == 'nt':  # Windows
-            activate_script = venv_path / "Scripts" / "activate.bat"
-            # 在 Windows 中，我们需要设置环境变量
             venv_python = venv_path / "Scripts" / "python.exe"
         else:  # Unix
             venv_python = venv_path / "bin" / "python"
-
-        # 安装 Python 依赖
-        print_info("Checking Python dependencies...")
-        print_info("Running: pip install -r requirements.txt")
-        subprocess.run([str(venv_python), "-m", "pip", "install", "-r", "requirements.txt"], check=True)
-        print_success("Python dependencies checked successfully!")
-
-        # 检查前端依赖
-        print_info("Checking frontend dependencies...")
-        if not (Path("shelter-ui") / "node_modules").exists():
-            print_warning("Frontend dependencies not found!")
-            choice = input("Install frontend dependencies? [Y/n]: ").strip().lower()
-            if choice != 'n':
-                print_info("Installing frontend dependencies...")
-                try:
-                    # Windows上使用GBK编码读取输出,忽略编码错误
-                    if sys.platform == 'win32':
-                        subprocess.run(
-                            "npm install",
-                            cwd="shelter-ui",
-                            shell=True,
-                            check=True,
-                            encoding='gbk',
-                            errors='ignore'
-                        )
-                    else:
-                        subprocess.run(
-                            "npm install",
-                            cwd="shelter-ui",
-                            shell=True,
-                            check=True
-                        )
-                    print_success("Frontend dependencies installed successfully!\n")
-                except (subprocess.CalledProcessError, FileNotFoundError) as e:
-                    print_error(f"Failed to install frontend dependencies: {e}")
-                    print_error("Please make sure Node.js and npm are installed.")
-                    sys.exit(1)
-            else:
-                print_error("Cannot start without frontend dependencies.")
-                sys.exit(1)
-        else:
-            print_success("Frontend dependencies already installed!")
 
         # 检查前端构建
         print_info("Checking frontend build...")
@@ -230,6 +276,11 @@ def main():
                 print_info("Build target:", str(frontend_build_path))
                 sys.stdout.flush()
                 
+                # 设置生产环境构建变量
+                build_env = os.environ.copy()
+                # 生产环境使用空字符串，API调用将使用相对路径
+                build_env["REACT_APP_API_URL"] = ""
+                
                 # Windows上使用GBK编码读取输出,避免编码错误
                 if sys.platform == 'win32':
                     result = subprocess.run(
@@ -240,7 +291,8 @@ def main():
                         stdout=sys.stdout,
                         stderr=sys.stderr,
                         encoding='gbk',
-                        errors='ignore'
+                        errors='ignore',
+                        env=build_env
                     )
                 else:
                     result = subprocess.run(
@@ -249,7 +301,8 @@ def main():
                         shell=True,
                         check=True,
                         stdout=sys.stdout,
-                        stderr=sys.stderr
+                        stderr=sys.stderr,
+                        env=build_env
                     )
                 
                 # 检查构建是否成功
@@ -274,16 +327,9 @@ def main():
 
 
 
-        # 读取前端端口配置(现在主要用后端端口)
-        frontend_port = 8000
-        env_file = Path("shelter-ui") / ".env"
-        if env_file.exists():
-            # 使用UTF-8编码打开.env文件,并忽略编码错误
-            with open(env_file, encoding='utf-8', errors='ignore') as f:
-                for line in f:
-                    if line.startswith("REACT_APP_FRONTEND_PORT="):
-                        frontend_port = int(line.split("=")[1].strip())
-                        break
+        # 统一端口配置：前端端口在正常模式下使用后端端口，开发模式下使用前端开发端口
+        frontend_port = backend_port  # 正常模式下前端由后端服务
+        frontend_dev_port = int(os.getenv("FRONTEND_DEV_PORT", "3000"))  # 开发模式前端端口
 
         # 启动服务
         print("\n" + "=" * 40)
@@ -292,7 +338,7 @@ def main():
 
         if dev_mode or debug_mode:
             print_warning("前端开发模式：React热重载已启用")
-            print_info(f"前端地址: http://localhost:3000")
+            print_info(f"前端地址: http://localhost:{frontend_dev_port}")
             print_info(f"后端地址: http://localhost:{backend_port}")
             print_warning("请在另一个终端运行: cd shelter-ui && npm start")
         else:
@@ -308,6 +354,7 @@ def main():
         # 设置环境变量并启动后端
         env = os.environ.copy()
         env["PYTHONPATH"] = str(Path.cwd())
+        env["BACKEND_PORT"] = str(backend_port)  # 传递端口到后端
 
         if debug_mode:
             env["PYTHONUNBUFFERED"] = "1"  # 确保Python输出不被缓冲
@@ -319,7 +366,10 @@ def main():
             print("\n" + "=" * 40)
             print(f"{Colors.BOLD}    Access Your Application{Colors.ENDC}")
             print("=" * 40)
-            print_info(f"Open in browser: http://localhost:{frontend_port}")
+            if dev_mode or debug_mode:
+                print_info(f"Open in browser: http://localhost:{frontend_dev_port}")
+            else:
+                print_info(f"Open in browser: http://localhost:{backend_port}")
             print("=" * 40)
             print("")
             
@@ -374,7 +424,7 @@ def main():
             print_info("应用已停止运行")
 
     except Exception as e:
-        print_error(f"Error during startup: {e}")
+        print_error(f"启动过程中发生错误: {e}")
         # 确保在异常情况下也清理进程
         for proc in processes:
             if proc.poll() is None:
