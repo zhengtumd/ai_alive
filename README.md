@@ -1,5 +1,7 @@
 # AI Shelter - 智能AI对话平台
 
+![AI Shelter Demo](docs/example_v1.gif)
+
 AI Shelter 是一个现代化的智能AI对话平台，支持多种AI模型（ChatGPT、Gemini、DeepSeek等），提供友好的用户界面和灵活的部署选项。
 
 ## ✨ 特性
