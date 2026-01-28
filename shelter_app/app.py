@@ -94,13 +94,29 @@ def expand_env_vars(obj):
         return obj
 
 
-def init_shelter(config_path: str = "config/ai_config.yaml") -> Shelter:
+def init_shelter(config_path: str = None, config: dict = None) -> Shelter:
     """初始化 Shelter 实例"""
-    with open(config_path, "r", encoding="utf-8") as f:
-        config = yaml.safe_load(f)
+    # 如果未提供配置，则加载配置文件
+    if config is None:
+        # 确定配置文件路径
+        if config_path is None:
+            base_dir = Path(__file__).parent.parent
+            config_path = base_dir / "config" / "ai_config.yaml"
+            example_path = base_dir / "config" / "ai_config.example.yaml"
+            
+            # 优先使用实际配置文件，否则使用示例文件
+            if not config_path.exists():
+                if example_path.exists():
+                    config_path = example_path
+                    print("INFO: 使用示例配置文件")
+                else:
+                    raise FileNotFoundError(f"配置文件不存在: {config_path}")
+        
+        with open(config_path, "r", encoding="utf-8") as f:
+            config = yaml.safe_load(f)
 
-    # 展开环境变量
-    config = expand_env_vars(config)
+        # 展开环境变量
+        config = expand_env_vars(config)
 
     # 初始化模型
     models = {mid: OpenAIModel(cfg) for mid, cfg in config["models"].items()}
@@ -150,7 +166,7 @@ async def lifespan(app: FastAPI):
     reset_on_reload = config.get("shelter", {}).get("reset_on_reload", False)
 
     # 初始化或恢复 shelter
-    shelter = init_shelter()
+    shelter = init_shelter(used_config_path)
 
     # 如果不重置且有保存的状态，则恢复状态
     if not reset_on_reload and _saved_shelter_state:
