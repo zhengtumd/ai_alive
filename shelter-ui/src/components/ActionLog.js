@@ -1,15 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 function ActionLog({ liveState }) {
-  const [lastDetail, setLastDetail] = useState(null);
-  const [showDetail, setShowDetail] = useState(false);
   const timerRef = useRef(null);
   const [isPulsing, setIsPulsing] = useState(false);
 
   useEffect(() => {
     if (liveState?.detail) {
-      setLastDetail(liveState.detail);
-      setShowDetail(true);
       setIsPulsing(true);
 
       if (timerRef.current) {
