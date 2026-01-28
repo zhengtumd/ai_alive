@@ -829,7 +829,7 @@ function App() {
                   <span className="spinner"></span>
                   运行中...
                 </>
-              ) : dayState.ai_logs.length === 0 ? (
+              ) : dayState.day === 1 ? (
                 "🚀 开始模拟"
               ) : (
                 "⏭️ 模拟下一天"

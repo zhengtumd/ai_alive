@@ -231,16 +231,9 @@ def reset_simulation():
         return {"error": "Shelter 未初始化"}
 
     try:
-        # 保存配置信息
-        initial_tokens = shelter.initial_tokens
-        ai_agents_dict = shelter.ai_agents
-        
         # 重新初始化 Shelter
         from shelter_app.app import init_shelter
         shelter = init_shelter()
-        
-        # 将新的 shelter 实例注入到 API 模块
-        api.shelter = shelter
         
         # 获取重置后的初始状态
         initial_state = shelter.get_day_state()

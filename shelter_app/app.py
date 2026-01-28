@@ -72,23 +72,34 @@ def restore_shelter_state(shelter: Shelter, state: dict):
 
 def expand_env_vars(obj):
     """
-    递归展开对象中的环境变量（${VAR_NAME} 格式）
+    递归展开对象中的环境变量（${VAR_NAME:-default_value} 格式）
     
     环境变量优先级高于配置文件中的硬编码值。
-    如果环境变量未设置，则使用配置文件中的默认值（${} 会被替换为空字符串）。
+    如果环境变量未设置，则使用配置文件中的默认值。
     """
     if isinstance(obj, dict):
         return {k: expand_env_vars(v) for k, v in obj.items()}
     elif isinstance(obj, list):
         return [expand_env_vars(item) for item in obj]
     elif isinstance(obj, str):
-        # 匹配 ${VAR_NAME} 格式
+        # 匹配 ${VAR_NAME:-default_value} 格式
         def replace_env_var(match):
-            var_name = match.group(1)
+            full_match = match.group(1)
+            # 分割变量名和默认值（使用 :- 分隔）
+            if ':-' in full_match:
+                var_name, default_value = full_match.split(':-', 1)
+            else:
+                var_name = full_match
+                default_value = ""
+            
             env_value = os.getenv(var_name)
             if env_value is None:
-                print(f"警告: 环境变量 {var_name} 未设置，将使用配置文件中的默认值（或空字符串）")
-            return env_value if env_value is not None else ""
+                if default_value:
+                    print(f"信息: 环境变量 {var_name} 未设置，使用默认值: {default_value}")
+                else:
+                    print(f"警告: 环境变量 {var_name} 未设置且没有默认值")
+                return default_value
+            return env_value
         return re.sub(r'\$\{([^}]+)\}', replace_env_var, obj)
     else:
         return obj
@@ -210,8 +221,8 @@ app.include_router(api.router)
 class NoCacheStaticFiles(StarletteStaticFiles):
     """自定义静态文件服务，禁用浏览器缓存"""
     
-    async def file_response(self, *args, **kwargs):
-        response = await super().file_response(*args, **kwargs)
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
         # 添加缓存控制头，禁用浏览器缓存
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         response.headers["Pragma"] = "no-cache"

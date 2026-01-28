@@ -135,6 +135,16 @@ def install_dependencies():
     print_header()
     print_info("开始安装AI Shelter依赖和环境...")
     
+    # 检查环境变量长度，避免Windows上的截断问题
+    path_too_long = False
+    if os.name == 'nt':
+        path_var = os.environ.get('PATH', '')
+        if len(path_var) > 1900:  # 接近2047限制时警告
+            print_warning(f"系统PATH环境变量较长 ({len(path_var)} 字符)，接近Windows限制")
+            print_warning("这可能导致新安装的程序无法被找到")
+            print_info("将优先使用虚拟环境中的pip安装uv，避免PATH更新问题")
+            path_too_long = True
+    
     # 检查虚拟环境
     print_info("检查虚拟环境...")
     venv_path = Path(".venv")
@@ -162,30 +172,148 @@ def install_dependencies():
         venv_python = venv_path / "bin" / "python"
     
     # 安装Python依赖（使用uv管理）
-    print_info("安装Python依赖（使用uv）...")
+    print_info("安装Python依赖（使用uv管理）...")
     
-    # 检查是否已安装uv
-    try:
-        subprocess.run(["uv", "--version"], capture_output=True, check=True)
-        print_success("uv已安装，使用uv管理依赖")
-        use_uv = True
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        print_warning("uv未安装，使用pip作为备用方案")
-        print_info("推荐安装uv以获得更好的依赖管理：")
-        print_info("  Windows: curl -LsSf https://astral.sh/uv/install.sh | sh")
-        print_info("  Linux/Mac: curl -LsSf https://astral.sh/uv/install.sh | sh")
-        use_uv = False
+    # 定义函数查找uv可执行文件
+    def find_uv_executable():
+        """查找uv可执行文件的绝对路径"""
+        # 1. 首先检查虚拟环境目录
+        if os.name == 'nt':  # Windows
+            uv_in_venv = venv_path / "Scripts" / "uv.exe"
+        else:  # Unix
+            uv_in_venv = venv_path / "bin" / "uv"
+        
+        if uv_in_venv.exists():
+            return str(uv_in_venv)
+        
+        # 2. 检查PATH中的uv
+        try:
+            # 使用which/where命令查找
+            if os.name == 'nt':
+                result = subprocess.run(["where", "uv"], capture_output=True, text=True, check=False)
+            else:
+                result = subprocess.run(["which", "uv"], capture_output=True, text=True, check=False)
+            
+            if result.returncode == 0 and result.stdout.strip():
+                # 取第一个找到的路径
+                uv_path = result.stdout.strip().split('\n')[0].strip()
+                if uv_path:
+                    return uv_path
+        except Exception:
+            pass
+        
+        # 3. 检查常见安装位置（仅当不在虚拟环境中时）
+        common_paths = []
+        if os.name == 'nt':  # Windows
+            # Windows常见位置
+            common_paths.extend([
+                Path(os.path.expanduser("~")) / ".cargo" / "bin" / "uv.exe",
+                Path(os.path.expanduser("~")) / ".local" / "bin" / "uv.exe",
+                Path(os.environ.get("LOCALAPPDATA", "")) / "astral" / "bin" / "uv.exe",
+            ])
+        else:  # Unix
+            # Unix常见位置
+            common_paths.extend([
+                Path.home() / ".cargo" / "bin" / "uv",
+                Path.home() / ".local" / "bin" / "uv",
+                Path("/usr/local/bin/uv"),
+                Path("/usr/bin/uv"),
+            ])
+        
+        for path in common_paths:
+            if path.exists():
+                return str(path)
+        
+        return None
+    
+    # 查找uv可执行文件
+    uv_executable = find_uv_executable()
+    use_uv = False
+    uv_installed = uv_executable is not None
+    
+    if uv_installed:
+        # 验证uv是否可用
+        try:
+            subprocess.run([uv_executable, "--version"], capture_output=True, check=True)
+            print_success(f"找到uv: {uv_executable}")
+            use_uv = True
+        except Exception:
+            uv_installed = False
+            print_warning("找到uv但无法执行，将尝试重新安装")
+    
+    if not uv_installed:
+        print_warning("uv未安装或不可用，尝试安装...")
+        
+        # 优先尝试使用虚拟环境中的pip安装uv
+        try:
+            print_info("尝试使用pip安装uv到虚拟环境...")
+            subprocess.run([str(venv_python), "-m", "pip", "install", "uv"], check=True)
+            
+            # 重新查找uv
+            uv_executable = find_uv_executable()
+            if uv_executable:
+                subprocess.run([uv_executable, "--version"], capture_output=True, check=True)
+                print_success("uv安装成功！（使用pip安装）")
+                use_uv = True
+            else:
+                print_warning("pip安装uv成功但未找到可执行文件")
+        except Exception as e:
+            print_warning(f"pip安装uv失败: {e}")
+            
+            # 如果PATH过长，避免使用curl安装（可能无法更新PATH）
+            if path_too_long:
+                print_warning("由于PATH过长，跳过curl安装尝试，直接使用pip管理依赖")
+                print_info("建议清理系统PATH环境变量后重试安装")
+                use_uv = False
+            else:
+                # 回退到curl安装（官方方法）
+                try:
+                    print_info("尝试使用官方安装脚本安装uv...")
+                    if sys.platform == "win32":
+                        # Windows系统使用PowerShell安装
+                        subprocess.run([
+                            "powershell", "-Command",
+                            "curl -LsSf https://astral.sh/uv/install.sh | powershell -c -"
+                        ], check=True)
+                    else:
+                        # Linux/Mac系统使用shell安装
+                        subprocess.run([
+                            "curl", "-LsSf", "https://astral.sh/uv/install.sh", "|", "sh"
+                        ], check=True, shell=True)
+                    
+                    # 给系统一点时间更新PATH（特别是在Windows上）
+                    time.sleep(2)
+                    
+                    # 重新查找uv
+                    uv_executable = find_uv_executable()
+                    if uv_executable:
+                        subprocess.run([uv_executable, "--version"], capture_output=True, check=True)
+                        print_success("uv安装成功！（使用官方脚本）")
+                        use_uv = True
+                    else:
+                        print_warning("官方脚本安装可能成功，但未找到uv可执行文件")
+                except Exception as e2:
+                    print_warning(f"官方脚本安装uv也失败: {e2}")
+                    print_info("将使用pip管理依赖")
+                    use_uv = False
     
     if use_uv:
         # 使用uv安装依赖
         try:
+            # 确保uv_executable已设置
+            if not uv_executable:
+                print_warning("uv_executable未设置，尝试重新查找...")
+                uv_executable = find_uv_executable()
+                if not uv_executable:
+                    raise RuntimeError("无法找到uv可执行文件")
+            
             # 创建虚拟环境（如果不存在）
             if not venv_path.exists():
-                subprocess.run(["uv", "venv", ".venv"], check=True)
+                subprocess.run([uv_executable, "venv", ".venv"], check=True)
                 print_success("虚拟环境创建成功！")
             
             # 使用uv同步依赖
-            subprocess.run(["uv", "sync", "--frozen"], check=True)
+            subprocess.run([uv_executable, "sync", "--frozen"], check=True)
             print_success("Python依赖安装成功！（使用uv）")
             
             # 验证安装版本
@@ -196,7 +324,7 @@ def install_dependencies():
             else:
                 print_warning(f"OpenAI版本可能不正确: {result.stdout}")
                 
-        except subprocess.CalledProcessError as e:
+        except (subprocess.CalledProcessError, RuntimeError) as e:
             print_error(f"uv依赖安装失败: {e}")
             print_info("回退到pip安装...")
             use_uv = False
