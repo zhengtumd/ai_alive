@@ -272,8 +272,8 @@ def main():
                     sys.stdout.flush()
                 
                 print_info("Running: npm run build")
-                print_info("Current directory:", str(Path.cwd()))
-                print_info("Build target:", str(frontend_build_path))
+                print_info(f"Current directory: {str(Path.cwd())}")
+                print_info(f"Build target: {str(frontend_build_path)}")
                 sys.stdout.flush()
                 
                 # 设置生产环境构建变量
