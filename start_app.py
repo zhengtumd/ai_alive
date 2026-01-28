@@ -158,11 +158,34 @@ def install_dependencies():
     # 安装Python依赖
     print_info("安装Python依赖...")
     try:
-        subprocess.run([str(venv_python), "-m", "pip", "install", "-r", "requirements.txt"], check=True)
+        # 先升级pip
+        subprocess.run([str(venv_python), "-m", "pip", "install", "--upgrade", "pip"], check=False)
+        
+        # 强制卸载并重新安装OpenAI，确保使用指定版本
+        print_info("确保OpenAI使用指定版本...")
+        subprocess.run([str(venv_python), "-m", "pip", "uninstall", "-y", "openai"], check=False)
+        
+        # 强制安装所有依赖，使用指定版本
+        subprocess.run([str(venv_python), "-m", "pip", "install", "-r", "requirements.txt", "--force-reinstall", "--no-cache-dir"], check=True)
         print_success("Python依赖安装成功！")
+        
+        # 验证安装版本
+        print_info("验证依赖版本...")
+        result = subprocess.run([str(venv_python), "-m", "pip", "show", "openai"], capture_output=True, text=True, check=False)
+        if "1.44.0" in result.stdout:
+            print_success("OpenAI版本验证通过 (1.44.0)")
+        else:
+            print_warning(f"OpenAI版本可能不正确: {result.stdout}")
+            
     except subprocess.CalledProcessError:
-        print_error("Python依赖安装失败！")
-        sys.exit(1)
+        print_error("Python依赖安装失败！尝试使用忽略已安装选项...")
+        # 第二次尝试，忽略已安装的包
+        try:
+            subprocess.run([str(venv_python), "-m", "pip", "install", "-r", "requirements.txt", "--force-reinstall", "--ignore-installed", "--no-cache-dir"], check=True)
+            print_success("Python依赖安装成功！")
+        except subprocess.CalledProcessError:
+            print_error("Python依赖安装最终失败！")
+            sys.exit(1)
     
     # 安装前端依赖
     print_info("安装前端依赖...")
