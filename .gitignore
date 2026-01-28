@@ -58,3 +58,4 @@ config/*_local.yaml
 .env
 *.env.local
 !shelter-ui/.env.example
+.installed
