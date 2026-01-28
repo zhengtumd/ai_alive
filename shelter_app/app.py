@@ -128,8 +128,23 @@ def init_shelter(config_path: str = "config/ai_config.yaml") -> Shelter:
 async def lifespan(app: FastAPI):
     global shelter, _saved_shelter_state
 
-    # 读取配置
-    with open("config/ai_config.yaml", "r", encoding="utf-8") as f:
+    # 读取配置 - 使用绝对路径确保部署时也能找到
+    config_path = Path(__file__).parent.parent / "config" / "ai_config.yaml"
+    example_path = Path(__file__).parent.parent / "config" / "ai_config.example.yaml"
+    
+    # 优先使用示例配置文件（部署时使用）
+    if config_path.exists():
+        # 如果存在实际配置文件，使用它
+        used_config_path = config_path
+        print("INFO: 使用实际配置文件")
+    elif example_path.exists():
+        # 如果不存在实际配置，使用示例文件
+        used_config_path = example_path
+        print("INFO: 使用示例配置文件，请根据模板配置环境变量")
+    else:
+        raise FileNotFoundError(f"配置文件不存在: {config_path}")
+    
+    with open(used_config_path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
     reset_on_reload = config.get("shelter", {}).get("reset_on_reload", False)
