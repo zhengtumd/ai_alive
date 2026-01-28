@@ -76,7 +76,24 @@ build_env["REACT_APP_API_URL"] = ""
 
 ## 部署步骤
 
-### 方式一：使用启动脚本（推荐）
+### 方式一：使用 UV（推荐）
+
+```bash
+# 1. 安装 uv（如果未安装）
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 2. 安装依赖
+uv sync
+
+# 3. 设置端口（如服务器80端口）
+export BACKEND_PORT=80
+
+# 4. 启动应用
+uv run start-shelter
+# 或者：python start_app.py
+```
+
+### 方式二：使用启动脚本（兼容模式）
 
 ```bash
 # 1. 安装依赖
@@ -128,11 +145,19 @@ server {
 ```dockerfile
 FROM python:3.9
 
+# 安装 uv（推荐）
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.cargo/bin:${PATH}"
+
 WORKDIR /app
 COPY . .
 
-# 安装依赖
-RUN pip install -r requirements.txt
+# 安装依赖（优先使用uv）
+RUN if command -v uv >/dev/null 2>&1; then \
+        uv sync --frozen; \
+    else \
+        pip install -r requirements.txt; \
+    fi
 
 # 构建前端
 RUN cd shelter-ui && npm install && npm run build
@@ -233,7 +258,12 @@ python tools/check_ports.py
 
 ## 版本更新
 
-### 更新步骤
+### 更新步骤（使用 UV）
+1. 拉取最新代码
+2. 重新安装依赖：`uv sync`
+3. 重启应用：`uv run start-shelter`
+
+### 更新步骤（使用 pip）
 1. 拉取最新代码
 2. 重新安装依赖：`python start_app.py install`
 3. 重启应用：`python start_app.py`

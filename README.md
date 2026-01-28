@@ -14,14 +14,23 @@ AI Shelter 是一个现代化的智能AI对话平台，支持多种AI模型（Ch
 
 ## 🚀 快速开始
 
-### 第一步：安装依赖
+### 使用 UV（推荐 - 比 pip 快 10 倍）
+```bash
+# 安装 UV（极速 Python 包管理器）
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 安装依赖
+uv sync
+
+# 启动应用
+uv run start-shelter
+```
+
+### 使用传统方式（兼容模式）
 ```bash
 # 安装所有依赖和环境
 python start_app.py install
-```
 
-### 第二步：启动应用
-```bash
 # 启动应用（仅启动，不安装）
 python start_app.py
 ```
@@ -29,8 +38,8 @@ python start_app.py
 启动成功后访问：http://localhost:8000
 
 **说明：**
-- `install` 命令只安装依赖，不启动应用
-- 启动命令只启动应用，不执行安装
+- **UV**：极速依赖管理，推荐使用
+- **传统方式**：兼容性更好，适合所有环境
 
 ## 📚 详细文档
 
@@ -41,11 +50,11 @@ python start_app.py
 
 ## 🛠️ 启动模式
 
-| 模式 | 命令 | 适用场景 |
-|------|------|----------|
-| 正常模式 | `python start_app.py` | 日常使用、演示 |
-| 开发模式 | `python start_app.py --dev` | 前端开发 |
-| 调试模式 | `python start_app.py --debug` | 问题调试 |
+| 模式 | UV 命令 | 传统命令 | 适用场景 |
+|------|---------|----------|----------|
+| 正常模式 | `uv run start-shelter` | `python start_app.py` | 日常使用、演示 |
+| 开发模式 | `uv run dev` | `python start_app.py --dev` | 前端开发 |
+| 调试模式 | `uv run debug` | `python start_app.py --debug` | 问题调试 |
 
 ## 🌟 支持的AI模型
 
@@ -60,6 +69,7 @@ python start_app.py
 - **Python**: 3.8+
 - **Node.js**: 16.x+
 - **npm**: 8.x+
+- **推荐**: 安装 UV（极速 Python 包管理器）
 
 ## 🆘 获取帮助
 

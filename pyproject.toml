@@ -1,0 +1,32 @@
+[project]
+name = "ai-shelter"
+version = "1.0.0"
+description = "AI Shelter - Multi-Agent Survival Simulation"
+authors = [
+    {name = "AI Shelter Team"}
+]
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+
+[project.urls]
+"Homepage" = "https://github.com/zhengtumd/ai_alive"
+
+[project.scripts]
+start-shelter = "shelter_app.run:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+# uv 特定配置
+
+[tool.uv.sources]
+# 依赖源配置
+
+[tool.uv.scripts]
+install = "start_app.py install"
+start = "start_app.py"
+dev = "start_app.py --dev"
+debug = "start_app.py --debug"

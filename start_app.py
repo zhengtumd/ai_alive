@@ -141,8 +141,14 @@ def install_dependencies():
     if not venv_path.exists():
         print_warning("虚拟环境不存在，正在创建...")
         try:
-            subprocess.run([sys.executable, "-m", "venv", ".venv"], check=True)
-            print_success("虚拟环境创建成功！")
+            # 尝试使用uv创建虚拟环境（如果已安装）
+            try:
+                subprocess.run(["uv", "venv", ".venv"], capture_output=True, check=True)
+                print_success("虚拟环境创建成功！（使用uv）")
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                # 回退到标准venv
+                subprocess.run([sys.executable, "-m", "venv", ".venv"], check=True)
+                print_success("虚拟环境创建成功！（使用venv）")
         except subprocess.CalledProcessError:
             print_error("创建虚拟环境失败！")
             sys.exit(1)
@@ -155,37 +161,77 @@ def install_dependencies():
     else:  # Unix
         venv_python = venv_path / "bin" / "python"
     
-    # 安装Python依赖
-    print_info("安装Python依赖...")
+    # 安装Python依赖（使用uv管理）
+    print_info("安装Python依赖（使用uv）...")
+    
+    # 检查是否已安装uv
     try:
-        # 先升级pip
-        subprocess.run([str(venv_python), "-m", "pip", "install", "--upgrade", "pip"], check=False)
-        
-        # 强制卸载并重新安装OpenAI，确保使用指定版本
-        print_info("确保OpenAI使用指定版本...")
-        subprocess.run([str(venv_python), "-m", "pip", "uninstall", "-y", "openai"], check=False)
-        
-        # 强制安装所有依赖，使用指定版本
-        subprocess.run([str(venv_python), "-m", "pip", "install", "-r", "requirements.txt", "--force-reinstall", "--no-cache-dir"], check=True)
-        print_success("Python依赖安装成功！")
-        
-        # 验证安装版本
-        print_info("验证依赖版本...")
-        result = subprocess.run([str(venv_python), "-m", "pip", "show", "openai"], capture_output=True, text=True, check=False)
-        if "1.44.0" in result.stdout:
-            print_success("OpenAI版本验证通过 (1.44.0)")
-        else:
-            print_warning(f"OpenAI版本可能不正确: {result.stdout}")
-            
-    except subprocess.CalledProcessError:
-        print_error("Python依赖安装失败！尝试使用忽略已安装选项...")
-        # 第二次尝试，忽略已安装的包
+        subprocess.run(["uv", "--version"], capture_output=True, check=True)
+        print_success("uv已安装，使用uv管理依赖")
+        use_uv = True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        print_warning("uv未安装，使用pip作为备用方案")
+        print_info("推荐安装uv以获得更好的依赖管理：")
+        print_info("  Windows: curl -LsSf https://astral.sh/uv/install.sh | sh")
+        print_info("  Linux/Mac: curl -LsSf https://astral.sh/uv/install.sh | sh")
+        use_uv = False
+    
+    if use_uv:
+        # 使用uv安装依赖
         try:
-            subprocess.run([str(venv_python), "-m", "pip", "install", "-r", "requirements.txt", "--force-reinstall", "--ignore-installed", "--no-cache-dir"], check=True)
-            print_success("Python依赖安装成功！")
+            # 创建虚拟环境（如果不存在）
+            if not venv_path.exists():
+                subprocess.run(["uv", "venv", ".venv"], check=True)
+                print_success("虚拟环境创建成功！")
+            
+            # 使用uv同步依赖
+            subprocess.run(["uv", "sync", "--frozen"], check=True)
+            print_success("Python依赖安装成功！（使用uv）")
+            
+            # 验证安装版本
+            print_info("验证依赖版本...")
+            result = subprocess.run([str(venv_python), "-m", "pip", "show", "openai"], capture_output=True, text=True, check=False)
+            if "1.44.0" in result.stdout:
+                print_success("OpenAI版本验证通过 (1.44.0)")
+            else:
+                print_warning(f"OpenAI版本可能不正确: {result.stdout}")
+                
+        except subprocess.CalledProcessError as e:
+            print_error(f"uv依赖安装失败: {e}")
+            print_info("回退到pip安装...")
+            use_uv = False
+    
+    if not use_uv:
+        # 回退到pip安装
+        try:
+            # 先升级pip
+            subprocess.run([str(venv_python), "-m", "pip", "install", "--upgrade", "pip"], check=False)
+            
+            # 强制卸载并重新安装OpenAI，确保使用指定版本
+            print_info("确保OpenAI使用指定版本...")
+            subprocess.run([str(venv_python), "-m", "pip", "uninstall", "-y", "openai"], check=False)
+            
+            # 强制安装所有依赖，使用指定版本
+            subprocess.run([str(venv_python), "-m", "pip", "install", "-r", "requirements.txt", "--force-reinstall", "--no-cache-dir"], check=True)
+            print_success("Python依赖安装成功！（使用pip）")
+            
+            # 验证安装版本
+            print_info("验证依赖版本...")
+            result = subprocess.run([str(venv_python), "-m", "pip", "show", "openai"], capture_output=True, text=True, check=False)
+            if "1.44.0" in result.stdout:
+                print_success("OpenAI版本验证通过 (1.44.0)")
+            else:
+                print_warning(f"OpenAI版本可能不正确: {result.stdout}")
+                
         except subprocess.CalledProcessError:
-            print_error("Python依赖安装最终失败！")
-            sys.exit(1)
+            print_error("Python依赖安装失败！尝试使用忽略已安装选项...")
+            # 第二次尝试，忽略已安装的包
+            try:
+                subprocess.run([str(venv_python), "-m", "pip", "install", "-r", "requirements.txt", "--force-reinstall", "--ignore-installed", "--no-cache-dir"], check=True)
+                print_success("Python依赖安装成功！")
+            except subprocess.CalledProcessError:
+                print_error("Python依赖安装最终失败！")
+                sys.exit(1)
     
     # 安装前端依赖
     print_info("安装前端依赖...")

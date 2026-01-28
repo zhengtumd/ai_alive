@@ -143,6 +143,21 @@ shelter-ui/
 
 ## 开发工具
 
+### 使用 UV 管理依赖（推荐）
+```bash
+# 安装依赖（使用uv，比pip快10倍）
+uv sync
+
+# 运行应用
+uv run start-shelter
+
+# 开发模式
+uv run dev
+
+# 调试模式
+uv run debug
+```
+
 ### 端口检测工具
 ```bash
 # 检测端口占用情况
