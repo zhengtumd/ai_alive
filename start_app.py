@@ -181,6 +181,55 @@ def install_dependencies():
     else:
         print_success("前端依赖已存在")
     
+    # 构建前端
+    print_info("构建前端应用...")
+    frontend_build_path = Path("shelter-ui") / "build"
+    try:
+        # 删除旧的 build 目录以确保完全重新构建
+        if frontend_build_path.exists():
+            import shutil
+            shutil.rmtree(frontend_build_path)
+            print_success("旧构建目录已清理")
+        
+        # 设置生产环境构建变量
+        build_env = os.environ.copy()
+        build_env["REACT_APP_API_URL"] = ""
+        
+        print_info("运行: npm run build")
+        if sys.platform == 'win32':
+            subprocess.run(
+                "npm run build",
+                cwd="shelter-ui",
+                shell=True,
+                check=True,
+                stdout=sys.stdout,
+                stderr=sys.stderr,
+                encoding='gbk',
+                errors='ignore',
+                env=build_env
+            )
+        else:
+            subprocess.run(
+                "npm run build",
+                cwd="shelter-ui",
+                shell=True,
+                check=True,
+                stdout=sys.stdout,
+                stderr=sys.stderr,
+                env=build_env
+            )
+        
+        if frontend_build_path.exists():
+            print_success("前端构建成功！")
+        else:
+            print_error("前端构建失败，构建目录未找到")
+            sys.exit(1)
+            
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        print_error(f"前端构建失败: {e}")
+        print_error("请确保Node.js和npm已正确安装")
+        sys.exit(1)
+    
     # 设置安装标记
     mark_installed()
     print_success("所有依赖和环境安装完成！")
@@ -249,79 +298,12 @@ def main():
             print_info("请在另一个终端运行: cd shelter-ui && npm start")
             print_info("然后访问: http://localhost:3000")
         else:
-            # 正常模式：每次都重新构建前端
-            print_info("Building frontend (rebuild every time)...")
-            try:
-                # 删除旧的 build 目录以确保完全重新构建
-                if frontend_build_path.exists():
-                    print_info("Cleaning old build directory...")
-                    import shutil
-                    shutil.rmtree(frontend_build_path)
-                    print_success("Old build directory removed")
-                else:
-                    print_info("No old build directory found")
-                
-                sys.stdout.flush()
-                
-                # 先删除 node_modules/.cache 避免缓存问题
-                cache_path = Path("shelter-ui") / "node_modules" / ".cache"
-                if cache_path.exists():
-                    import shutil
-                    shutil.rmtree(cache_path)
-                    print_info("Cleared node_modules/.cache")
-                    sys.stdout.flush()
-                
-                print_info("Running: npm run build")
-                print_info(f"Current directory: {str(Path.cwd())}")
-                print_info(f"Build target: {str(frontend_build_path)}")
-                sys.stdout.flush()
-                
-                # 设置生产环境构建变量
-                build_env = os.environ.copy()
-                # 生产环境使用空字符串，API调用将使用相对路径
-                build_env["REACT_APP_API_URL"] = ""
-                
-                # Windows上使用GBK编码读取输出,避免编码错误
-                if sys.platform == 'win32':
-                    result = subprocess.run(
-                        "npm run build",
-                        cwd="shelter-ui",
-                        shell=True,
-                        check=True,
-                        stdout=sys.stdout,
-                        stderr=sys.stderr,
-                        encoding='gbk',
-                        errors='ignore',
-                        env=build_env
-                    )
-                else:
-                    result = subprocess.run(
-                        "npm run build",
-                        cwd="shelter-ui",
-                        shell=True,
-                        check=True,
-                        stdout=sys.stdout,
-                        stderr=sys.stderr,
-                        env=build_env
-                    )
-                
-                # 检查构建是否成功
-                if frontend_build_path.exists():
-                    print_success("Frontend built successfully!")
-                    # 列出构建产物
-                    if (frontend_build_path / "static").exists():
-                        js_files = list((frontend_build_path / "static" / "js").glob("*.js"))
-                        print_info(f"Generated {len(js_files)} JS files")
-                        for js_file in js_files:
-                            print_info(f"  - {js_file.name}")
-                    print()
-                else:
-                    print_error("Build directory not found after build!")
-                    sys.exit(1)
-                    
-            except (subprocess.CalledProcessError, FileNotFoundError) as e:
-                print_error(f"Failed to build frontend: {e}")
-                print_error("Please make sure Node.js and npm are installed.")
+            # 正常模式：检查是否已构建前端
+            if frontend_build_path.exists():
+                print_success("前端已构建，跳过构建步骤")
+            else:
+                print_error("前端未构建，请先运行: python start_app.py install")
+                print_info("或手动构建: cd shelter-ui && npm run build")
                 sys.exit(1)
 
 
