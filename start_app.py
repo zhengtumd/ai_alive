@@ -309,7 +309,6 @@ def main():
                 if frontend_build_path.exists():
                     print_success("Frontend built successfully!")
                     # 列出构建产物
-                    import os
                     if (frontend_build_path / "static").exists():
                         js_files = list((frontend_build_path / "static" / "js").glob("*.js"))
                         print_info(f"Generated {len(js_files)} JS files")
