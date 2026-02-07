@@ -347,13 +347,18 @@ const useAppStore = create<AppStore>()(
           const liveState = await shelterAPI.getLiveState();
           set(state => ({
             lastRunningState: state.liveState.running, // 先保存上一次的running状态
-            liveState
+            liveState,
+            // 同步周期天数，确保前端显示与后端一致
+            systemState: liveState.day !== state.systemState.day ? {
+              ...state.systemState,
+              day: liveState.day
+            } : state.systemState
           }));
 
           // 不再根据running自动停止loading
           // loading会在runNextDay的await结束后自动重置
 
-          console.log('✓ 实时状态更新成功', liveState.running ? '运行中' : '已结束');
+          console.log('✓ 实时状态更新成功', liveState.running ? '运行中' : '已结束', `周期: ${liveState.day}`);
         } catch (error) {
           console.warn('⚠ 实时状态更新失败');
         }
