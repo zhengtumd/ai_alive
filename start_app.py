@@ -506,6 +506,16 @@ def install_dependencies():
         # 设置生产环境构建变量
         build_env = os.environ.copy()
         build_env["REACT_APP_API_URL"] = ""
+        # 设置 Vite 环境变量，用于前端构建时注入 API 地址
+        backend_port = os.getenv("BACKEND_PORT", "8000")
+        build_env["VITE_BACKEND_PORT"] = backend_port
+        
+        # 优先使用用户自定义的 VITE_API_BASE_URL，否则根据端口生成默认值
+        if "VITE_API_BASE_URL" not in os.environ:
+            build_env["VITE_API_BASE_URL"] = f"http://localhost:{backend_port}"
+            print_info(f"设置默认 API 地址: http://localhost:{backend_port}")
+        else:
+            print_info(f"使用自定义 API 地址: {os.environ['VITE_API_BASE_URL']}")
 
         print_info("运行: npm run build")
         if sys.platform == 'win32':
@@ -621,6 +631,15 @@ def main():
 
         # 检查是否使用前端开发模式或调试模式
         if dev_mode or debug_mode:
+            # 创建或更新前端开发环境变量文件
+            env_file_path = Path("shelter_ui") / ".env.development.local"
+            try:
+                env_file_path.write_text(f"VITE_BACKEND_PORT={backend_port}\n", encoding="utf-8")
+                print_success(f"已创建前端环境文件: {env_file_path}")
+            except Exception as e:
+                print_warning(f"无法创建环境文件: {e}")
+                print_info(f"请手动设置环境变量: VITE_BACKEND_PORT={backend_port}")
+            
             print_success("前端开发模式已启用，跳过构建步骤")
             print_info("请在另一个终端运行: cd shelter_ui && npm start")
             print_info("然后访问: http://localhost:3000")
@@ -654,7 +673,7 @@ def main():
             print_warning("前端开发模式：React热重载已启用")
             print_info(f"前端地址: http://localhost:{frontend_dev_port}")
             print_info(f"后端地址: http://localhost:{backend_port}")
-            print_warning("请在另一个终端运行: cd shelter_ui && npm start")
+            print_warning("请在另一个终端运行: cd shelter_ui && npm start (环境变量 VITE_BACKEND_PORT 已自动设置)")
         else:
             print_info(f"后端服务器: http://localhost:{backend_port} (包含前端静态文件)")
 

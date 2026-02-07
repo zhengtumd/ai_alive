@@ -1,7 +1,26 @@
 import axios from 'axios';
-import type { AIState, SystemState, Proposal, GameEvent, APIResponse, AIDecision } from '@/types';
+import type { AIState, SystemState, Proposal, GameEvent, APIResponse, AIDecision, LiveStateResponse } from '@/types';
 
-const API_BASE_URL = '/api';
+// 动态获取 API 基础 URL
+const getApiBaseUrl = (): string => {
+  // 开发环境：使用代理路径，避免 CORS
+  if (import.meta.env.DEV) {
+    return '/api';
+  }
+  
+  // 生产环境：优先使用 VITE_API_BASE_URL 环境变量
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  // 其次使用 VITE_BACKEND_PORT 构建本地地址
+  if (import.meta.env.VITE_BACKEND_PORT) {
+    return `http://localhost:${import.meta.env.VITE_BACKEND_PORT}`;
+  }
+  // 生产环境默认使用相对路径（前后端同域）
+  return '';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
