@@ -1,0 +1,38 @@
+{
+  "timestamp": "2026-01-31T17:52:29.732926",
+  "total": 6,
+  "passed": 5,
+  "failed": 1,
+  "results": [
+    {
+      "name": "AI列表",
+      "success": true,
+      "error": null
+    },
+    {
+      "name": "实时状态",
+      "success": true,
+      "error": null
+    },
+    {
+      "name": "系统状态",
+      "success": true,
+      "error": null
+    },
+    {
+      "name": "AI详情",
+      "success": true,
+      "error": null
+    },
+    {
+      "name": "运行下一天",
+      "success": false,
+      "error": "状态码错误: 500"
+    },
+    {
+      "name": "重置模拟",
+      "success": true,
+      "error": null
+    }
+  ]
+}

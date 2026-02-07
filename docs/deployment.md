@@ -20,7 +20,7 @@ AI Shelter 采用前后端分离架构：
 python start_app.py --dev
 
 # 启动前端开发服务器（端口3000，另一个终端）
-cd shelter-ui
+cd shelter_ui
 npm start
 ```
 
@@ -110,7 +110,7 @@ python start_app.py
 
 ```bash
 # 1. 构建前端
-cd shelter-ui
+cd shelter_ui
 npm run build
 
 # 2. 启动后端（指定端口）
@@ -160,7 +160,7 @@ RUN if command -v uv >/dev/null 2>&1; then \
     fi
 
 # 构建前端
-RUN cd shelter-ui && npm install && npm run build
+RUN cd shelter_ui && npm install && npm run build
 
 # 设置端口
 ENV BACKEND_PORT=80

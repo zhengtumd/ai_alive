@@ -1,0 +1,264 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Rajdhani', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-gray-950 min-h-screen;
+    background-attachment: fixed;
+    overflow-x: hidden;
+    color: #f9fafb;
+    background-image: 
+      radial-gradient(circle at 20% 80%, rgba(6, 182, 212, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(34, 211, 238, 0.03) 0%, transparent 50%),
+      linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(31, 41, 55, 0.98) 100%);
+  }
+}
+
+@layer components {
+  /* 末日科幻风格组件 - 清晰可见的暗黑风格 */
+  .cyber-border {
+    @apply relative border-2 border-gray-700 bg-gray-900;
+    box-shadow: 
+      inset 0 0 0 1px rgba(75, 85, 99, 0.9),
+      0 0 0 2px rgba(55, 65, 81, 0.8),
+      0 6px 25px rgba(0, 0, 0, 0.9),
+      inset 0 2px 0 rgba(255, 255, 255, 0.1);
+  }
+  
+  .cyber-border::before {
+    content: '';
+    @apply absolute inset-0 border border-cyan-500/30 pointer-events-none;
+  }
+  
+  .hologram-effect {
+    @apply relative overflow-hidden;
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(34, 211, 238, 0.2) 100%);
+  }
+  
+  .hologram-effect::after {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-cyan-500/15 to-transparent;
+  }
+  
+  .data-panel {
+    @apply cyber-border rounded-lg p-4 transition-all duration-300 hover:scale-[1.01];
+    background: linear-gradient(145deg, rgba(17, 24, 39, 1) 0%, rgba(31, 41, 55, 0.98) 100%);
+  }
+  
+  .status-indicator {
+    @apply inline-block w-3 h-3 rounded-full mr-2;
+  }
+  
+  .status-alive { @apply bg-green-600; }
+  .status-dead { @apply bg-red-600; }
+  .status-critical { @apply bg-orange-600; }
+  
+  .vote-support { @apply bg-green-600/20 text-green-500 border-green-600/30; }
+  .vote-oppose { @apply bg-red-600/20 text-red-500 border-red-600/30; }
+  
+  .action-log {
+    @apply cyber-border rounded p-2 mb-2 text-sm;
+    background: linear-gradient(90deg, rgba(6, 182, 212, 0.03) 0%, transparent 100%);
+  }
+  
+/* 自定义滚动条 - 末日科幻风格，增强版 */
+.cyber-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(6, 182, 212, 0.5) rgba(17, 24, 39, 0.8);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* 强制所有滚动条样式 */
+.cyber-scrollbar::-webkit-scrollbar {
+  width: 10px !important;
+  background: rgba(17, 24, 39, 0.8) !important;
+}
+
+.cyber-scrollbar::-webkit-scrollbar-track {
+  background: rgba(17, 24, 39, 0.8) !important;
+  border-radius: 6px !important;
+  margin: 4px 0 !important;
+  border: 1px solid rgba(75, 85, 99, 0.5) !important;
+}
+
+.cyber-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.9) 0%, rgba(34, 211, 238, 0.7) 100%) !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(6, 182, 212, 0.6) !important;
+  box-shadow: 
+    inset 0 0 0 1px rgba(6, 182, 212, 0.3),
+    0 0 15px rgba(6, 182, 212, 0.4) !important;
+}
+
+.cyber-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 1) 0%, rgba(34, 211, 238, 0.9) 100%) !important;
+  box-shadow: 
+    inset 0 0 0 1px rgba(6, 182, 212, 0.6),
+    0 0 20px rgba(6, 182, 212, 0.6) !important;
+}
+
+.cyber-scrollbar::-webkit-scrollbar-corner {
+  background: rgba(17, 24, 39, 0.8) !important;
+}
+
+/* 进度条扫描线动画 */
+@keyframes scanline {
+  0% {
+    transform: translateX(-30%);
+  }
+  100% {
+    transform: translateX(130%);
+  }
+}
+
+/* 为Firefox优化的滚动条 */
+@supports (scrollbar-color: rgba(6, 182, 212, 0.5) transparent) {
+  .cyber-scrollbar {
+    scrollbar-color: rgba(6, 182, 212, 0.5) rgba(17, 24, 39, 0.8);
+    scrollbar-width: thin;
+  }
+}
+
+/* 始终显示滚动条 */
+.always-visible-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  background: rgba(17, 24, 39, 0.8);
+}
+
+.always-visible-scrollbar::-webkit-scrollbar-track {
+  background: rgba(17, 24, 39, 0.8);
+  border-radius: 4px;
+  margin: 4px 0;
+  border: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+.always-visible-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.9) 0%, rgba(34, 211, 238, 0.7) 100%);
+  border-radius: 4px;
+  border: 1px solid rgba(6, 182, 212, 0.5);
+  box-shadow: 
+    inset 0 0 0 1px rgba(6, 182, 212, 0.3),
+    0 0 15px rgba(6, 182, 212, 0.4);
+}
+
+.always-visible-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 1) 0%, rgba(34, 211, 238, 0.9) 100%);
+  box-shadow: 
+    inset 0 0 0 1px rgba(6, 182, 212, 0.6),
+    0 0 20px rgba(6, 182, 212, 0.6);
+}
+
+  /* 隐藏原生滚动条 */
+  .scrollbar-hidden {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 环形图布局优化 */
+  .ai-circle-container {
+    @apply flex items-center justify-center;
+    aspect-ratio: 1/1;
+    min-height: 400px;
+    max-height: calc(100vh - 200px);
+    max-width: calc(100vh - 200px);
+  }
+
+  .ai-monitor-container {
+    @apply flex flex-col overflow-hidden;
+    max-height: calc(100vh - 200px);
+    min-height: 400px;
+  }
+
+  /* 网格布局优化 */
+  .ai-status-grid {
+    @apply grid grid-cols-2 gap-4;
+    grid-template-columns: 1fr 1fr;
+    min-height: 400px;
+  }
+}
+
+@layer utilities {
+  .text-cyber {
+    @apply font-cyber tracking-wider;
+    text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+  }
+  
+  .text-tech {
+    @apply font-tech font-medium;
+  }
+  
+  .gradient-text {
+    @apply bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent;
+  }
+  
+  .glow-effect {
+    filter: drop-shadow(0 0 8px currentColor);
+  }
+}
+
+
+
+/* 暗黑主题优化 */
+.dark-mode {
+  --bg-primary: #111827;
+  --bg-secondary: #1f2937;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --border-color: #374151;
+  --accent-color: #06b6d4;
+}
+
+/* 响应式优化 */
+@media (max-width: 1024px) {
+  .cyber-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+}
+
+/* 行动展示动画 */
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.5s ease-out;
+}
+
+/* 脉冲动画增强 */
+@keyframes pulse-strong {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-strong {
+  animation: pulse-strong 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@media (max-width: 768px) {
+  .cyber-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+}

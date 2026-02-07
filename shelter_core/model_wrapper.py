@@ -8,30 +8,45 @@ class OpenAIModel:
         # 初始化logger
         self.logger = get_logger("ModelRequest", console_level=logging.INFO, file_level=logging.DEBUG)
 
-        self.client = OpenAI(
-            api_key=cfg["api_key"],
-            base_url=cfg.get("api_base")
-        )
+        # 存储配置并立即初始化客户端（改为启动时加载）
+        self._config = cfg
         self.model_name = cfg["model_name"]
         self.temperature = cfg.get("temperature", 0.7)
+        
+        # 立即初始化客户端
+        self.logger.info(f"启动时初始化OpenAI模型: {self.model_name}, temperature={self.temperature}")
+        self._client = OpenAI(
+            api_key=self._config["api_key"],
+            base_url=self._config.get("api_base")
+        )
+        self.logger.info(f"模型 {self.model_name} 初始化完成")
 
-        # 记录初始化信息
-        self.logger.info(f"初始化OpenAI模型: {self.model_name}, temperature={self.temperature}")
-        self.logger.debug(f"API Base: {cfg.get('api_base', '默认')}")
+    @property
+    def client(self):
+        """直接返回已初始化的客户端"""
+        return self._client
 
-    def generate(self, prompt: str) -> str:
+    def generate(self, prompt: str, system_message: str = None) -> str:
         try:
             # 记录请求开始
             self.logger.debug(f"开始生成请求，提示词长度: {len(prompt)}")
+            if system_message:
+                self.logger.debug(f"System Message长度: {len(system_message)}")
             if len(prompt) < 500:  # 只记录短提示词
                 self.logger.debug(f"提示词内容: {prompt}")
             else:
                 self.logger.debug(f"提示词前200字符: {prompt[:200]}...")
 
+            # 构建messages
+            messages = []
+            if system_message:
+                messages.append({"role": "system", "content": system_message})
+            messages.append({"role": "user", "content": prompt})
+
             # 调用API
             resp = self.client.chat.completions.create(
                 model=self.model_name,
-                messages=[{"role": "user", "content": prompt}],
+                messages=messages,
                 temperature=self.temperature
             )
 

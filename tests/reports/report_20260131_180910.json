@@ -1,0 +1,237 @@
+{
+  "stats": {
+    "total": 32,
+    "passed": 31,
+    "failed": 1,
+    "pass_rate": 96.875,
+    "duration": 389.264097,
+    "total_test_duration": 389.263092,
+    "timestamp": "2026-01-31T18:09:10.310170"
+  },
+  "results": [
+    {
+      "name": "test_ai_detail_name_matches",
+      "success": true,
+      "duration": 0.028772,
+      "error": null,
+      "timestamp": "2026-01-31T18:02:41.074845"
+    },
+    {
+      "name": "test_get_ai_detail_success",
+      "success": true,
+      "duration": 0.00637,
+      "error": null,
+      "timestamp": "2026-01-31T18:02:41.081215"
+    },
+    {
+      "name": "test_memory_is_list",
+      "success": true,
+      "duration": 0.006138,
+      "error": null,
+      "timestamp": "2026-01-31T18:02:41.087353"
+    },
+    {
+      "name": "test_nonexistent_ai",
+      "success": true,
+      "duration": 0.004437,
+      "error": null,
+      "timestamp": "2026-01-31T18:02:41.091790"
+    },
+    {
+      "name": "test_agent_fields_types",
+      "success": true,
+      "duration": 0.006452,
+      "error": null,
+      "timestamp": "2026-01-31T18:02:41.098242"
+    },
+    {
+      "name": "test_agent_structure",
+      "success": true,
+      "duration": 0.00554,
+      "error": null,
+      "timestamp": "2026-01-31T18:02:41.103782"
+    },
+    {
+      "name": "test_ai_list_has_agents",
+      "success": true,
+      "duration": 0.005004,
+      "error": null,
+      "timestamp": "2026-01-31T18:02:41.108786"
+    },
+    {
+      "name": "test_get_ai_list_success",
+      "success": true,
+      "duration": 0.005943,
+      "error": null,
+      "timestamp": "2026-01-31T18:02:41.114729"
+    },
+    {
+      "name": "test_health_in_range",
+      "success": false,
+      "duration": 0.003531,
+      "error": "AI chatgpt 健康值 140 不在 [0, 100] 范围内",
+      "timestamp": "2026-01-31T18:02:41.118260"
+    },
+    {
+      "name": "test_day_is_integer",
+      "success": true,
+      "duration": 0.00541,
+      "error": null,
+      "timestamp": "2026-01-31T18:02:41.124675"
+    },
+    {
+      "name": "test_detail_structure",
+      "success": true,
+      "duration": 0.006451,
+      "error": null,
+      "timestamp": "2026-01-31T18:02:41.131126"
+    },
+    {
+      "name": "test_get_live_state_success",
+      "success": true,
+      "duration": 0.00403,
+      "error": null,
+      "timestamp": "2026-01-31T18:02:41.135156"
+    },
+    {
+      "name": "test_running_is_boolean",
+      "success": true,
+      "duration": 0.004227,
+      "error": null,
+      "timestamp": "2026-01-31T18:02:41.139383"
+    },
+    {
+      "name": "test_state_structure",
+      "success": true,
+      "duration": 0.003406,
+      "error": null,
+      "timestamp": "2026-01-31T18:02:41.142789"
+    },
+    {
+      "name": "test_reset_day_is_zero",
+      "success": true,
+      "duration": 12.351531,
+      "error": null,
+      "timestamp": "2026-01-31T18:02:53.494320"
+    },
+    {
+      "name": "test_reset_message",
+      "success": true,
+      "duration": 12.408828,
+      "error": null,
+      "timestamp": "2026-01-31T18:03:05.903148"
+    },
+    {
+      "name": "test_reset_resources_restored",
+      "success": true,
+      "duration": 48.957424,
+      "error": null,
+      "timestamp": "2026-01-31T18:03:54.860572"
+    },
+    {
+      "name": "test_reset_state_structure",
+      "success": true,
+      "duration": 12.913296,
+      "error": null,
+      "timestamp": "2026-01-31T18:04:07.773868"
+    },
+    {
+      "name": "test_reset_success",
+      "success": true,
+      "duration": 13.372279,
+      "error": null,
+      "timestamp": "2026-01-31T18:04:21.146147"
+    },
+    {
+      "name": "test_agents_present",
+      "success": true,
+      "duration": 34.046361,
+      "error": null,
+      "timestamp": "2026-01-31T18:04:55.192508"
+    },
+    {
+      "name": "test_day_events_is_list",
+      "success": true,
+      "duration": 52.153106,
+      "error": null,
+      "timestamp": "2026-01-31T18:05:47.345614"
+    },
+    {
+      "name": "test_day_incremented",
+      "success": true,
+      "duration": 37.183125,
+      "error": null,
+      "timestamp": "2026-01-31T18:06:24.528739"
+    },
+    {
+      "name": "test_proposals_is_list",
+      "success": true,
+      "duration": 38.702904,
+      "error": null,
+      "timestamp": "2026-01-31T18:07:03.231643"
+    },
+    {
+      "name": "test_resources_decreased_or_same",
+      "success": true,
+      "duration": 44.883437,
+      "error": null,
+      "timestamp": "2026-01-31T18:07:48.115080"
+    },
+    {
+      "name": "test_run_next_success",
+      "success": true,
+      "duration": 42.840376,
+      "error": null,
+      "timestamp": "2026-01-31T18:08:30.955456"
+    },
+    {
+      "name": "test_token_consumed_increased",
+      "success": true,
+      "duration": 39.322553,
+      "error": null,
+      "timestamp": "2026-01-31T18:09:10.278009"
+    },
+    {
+      "name": "test_agents_is_list",
+      "success": true,
+      "duration": 0.016093,
+      "error": null,
+      "timestamp": "2026-01-31T18:09:10.294102"
+    },
+    {
+      "name": "test_elimination_count_non_negative",
+      "success": true,
+      "duration": 0.003168,
+      "error": null,
+      "timestamp": "2026-01-31T18:09:10.297270"
+    },
+    {
+      "name": "test_get_status_success",
+      "success": true,
+      "duration": 0.003246,
+      "error": null,
+      "timestamp": "2026-01-31T18:09:10.300516"
+    },
+    {
+      "name": "test_proposals_is_list",
+      "success": true,
+      "duration": 0.002369,
+      "error": null,
+      "timestamp": "2026-01-31T18:09:10.302885"
+    },
+    {
+      "name": "test_resource_fields",
+      "success": true,
+      "duration": 0.003132,
+      "error": null,
+      "timestamp": "2026-01-31T18:09:10.306017"
+    },
+    {
+      "name": "test_system_efficiency_range",
+      "success": true,
+      "duration": 0.004153,
+      "error": null,
+      "timestamp": "2026-01-31T18:09:10.310170"
+    }
+  ]
+}

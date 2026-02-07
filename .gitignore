@@ -22,6 +22,9 @@ ENV/
 *.swo
 *~
 
+# Development tools
+.codebuddy/
+
 # Logs
 logs/
 *.log
@@ -34,13 +37,13 @@ yarn-debug.log*
 yarn-error.log*
 
 # React build
-shelter-ui/build/
-shelter-ui/.env
-shelter-ui/.env.local
-shelter-ui/.env.development.local
-shelter-ui/.env.test.local
-shelter-ui/.env.production.local
-!shelter-ui/.env.example
+shelter_ui/build/
+shelter_ui/.env
+shelter_ui/.env.local
+shelter_ui/.env.development.local
+shelter_ui/.env.test.local
+shelter_ui/.env.production.local
+!shelter_ui/.env.example
 
 # OS
 .DS_Store
@@ -53,9 +56,11 @@ Thumbs.db
 
 # Sensitive data
 config/ai_config.yaml
+config/emergent_config.yaml
 config/*_local.yaml
 *_local.yaml
 .env
 *.env.local
-!shelter-ui/.env.example
-.installed
+!shelter_ui/.env.example
+!config/emergent_config.yaml.example
+.installed 

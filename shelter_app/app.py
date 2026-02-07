@@ -11,93 +11,46 @@ from pathlib import Path
 import yaml
 import os
 import re
-from shelter_core.shelter import Shelter
-from shelter_core.agent import AIAgent
 from shelter_core.model_wrapper import OpenAIModel
+from shelter_core.emergent_shelter_v3 import EmergentShelterV3
+from shelter_core.emergent_agent_v3 import EmergentAgentV3
+from shelter_core.shelter_logging import get_logger
 
 from shelter_app import api
 
+# 获取日志记录器
+logger = get_logger(__name__)
+
 # 全局 shelter，在 lifespan 中初始化
-shelter: Shelter = None
+emergent_shelter: EmergentShelterV3 = None
 
 # 全局变量，用于在 reload 时保存 shelter 状态
 _saved_shelter_state = None
 
 
-def save_shelter_state(shelter: Shelter) -> dict:
-    """保存 shelter 的当前状态"""
-    return {
-        "day": shelter.day,
-        "total_tokens": shelter.total_tokens,
-        "total_consumed": shelter.total_consumed,
-        "initial_tokens": shelter.initial_tokens,
-        "daily_events": shelter.daily_events,
-        "history": shelter.history,
-        # 保存每个 agent 的状态
-        "agents_state": [
-            {
-                "name": name,
-                "alive": agent.alive,
-                "base_prompt_cost": agent.base_prompt_cost,
-                "total_spent": agent.total_spent,
-                "memory": agent.memory,
-                "inbox": agent.inbox,
-                "last_output": agent.last_output
-            }
-            for name, agent in shelter.ai_agents.items()
-        ]
-    }
-
-
-def restore_shelter_state(shelter: Shelter, state: dict):
-    """恢复 shelter 的状态"""
-    shelter.day = state["day"]
-    shelter.total_tokens = state["total_tokens"]
-    shelter.total_consumed = state["total_consumed"]
-    shelter.initial_tokens = state["initial_tokens"]
-    shelter.daily_events = state["daily_events"]
-    shelter.history = state["history"]
-
-    # 恢复每个 agent 的状态
-    for agent_state in state["agents_state"]:
-        agent = shelter.ai_agents.get(agent_state["name"])
-        if agent:
-            agent.alive = agent_state["alive"]
-            agent.base_prompt_cost = agent_state["base_prompt_cost"]
-            agent.total_spent = agent_state["total_spent"]
-            agent.memory = agent_state["memory"]
-            agent.inbox = agent_state["inbox"]
-            agent.last_output = agent_state["last_output"]
-
-
 def expand_env_vars(obj):
     """
     递归展开对象中的环境变量（${VAR_NAME:-default_value} 格式）
-    
-    环境变量优先级高于配置文件中的硬编码值。
-    如果环境变量未设置，则使用配置文件中的默认值。
     """
     if isinstance(obj, dict):
         return {k: expand_env_vars(v) for k, v in obj.items()}
     elif isinstance(obj, list):
         return [expand_env_vars(item) for item in obj]
     elif isinstance(obj, str):
-        # 匹配 ${VAR_NAME:-default_value} 格式
         def replace_env_var(match):
             full_match = match.group(1)
-            # 分割变量名和默认值（使用 :- 分隔）
             if ':-' in full_match:
                 var_name, default_value = full_match.split(':-', 1)
             else:
                 var_name = full_match
                 default_value = ""
-            
+
             env_value = os.getenv(var_name)
             if env_value is None:
                 if default_value:
-                    print(f"信息: 环境变量 {var_name} 未设置，使用默认值: {default_value}")
+                    logger.debug(f"环境变量 {var_name} 未设置，使用默认值: {default_value}")
                 else:
-                    print(f"警告: 环境变量 {var_name} 未设置且没有默认值")
+                    logger.warning(f"环境变量 {var_name} 未设置且没有默认值")
                 return default_value
             return env_value
         return re.sub(r'\$\{([^}]+)\}', replace_env_var, obj)
@@ -105,98 +58,85 @@ def expand_env_vars(obj):
         return obj
 
 
-def init_shelter(config_path: str = None, config: dict = None) -> Shelter:
-    """初始化 Shelter 实例"""
-    # 如果未提供配置，则加载配置文件
+def init_shelter(config_path: str = None, config: dict = None) -> EmergentShelterV3:
+    """初始化 EmergentShelterV3 实例"""
     if config is None:
-        # 确定配置文件路径
-        if config_path is None:
-            base_dir = Path(__file__).parent.parent
-            config_path = base_dir / "config" / "ai_config.yaml"
-            example_path = base_dir / "config" / "ai_config.example.yaml"
-            
-            # 优先使用实际配置文件，否则使用示例文件
-            if not config_path.exists():
-                if example_path.exists():
-                    config_path = example_path
-                    print("INFO: 使用示例配置文件")
-                else:
-                    raise FileNotFoundError(f"配置文件不存在: {config_path}")
-        
+        base_dir = Path(__file__).parent.parent
+        config_path = base_dir / "config" / "emergent_config.yaml"
+        example_path = base_dir / "config" / "ai_config.example.yaml"
+
+        if not config_path.exists():
+            if example_path.exists():
+                config_path = example_path
+                logger.info("使用示例配置文件")
+            else:
+                raise FileNotFoundError(f"配置文件不存在: {config_path}")
+
         with open(config_path, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
 
-        # 展开环境变量
         config = expand_env_vars(config)
 
-    # 初始化模型
-    models = {mid: OpenAIModel(cfg) for mid, cfg in config["models"].items()}
+    # 创建模型配置字典
+    models_config = {mid: cfg for mid, cfg in config["models"].items()}
 
-    # 初始化 agents
+    # 初始化 agents（改为启动时立即加载模型）
     agents = {}
     for cfg in config["agents"]:
-        agents[cfg["name"]] = AIAgent(
+        logger.info(f"创建AI代理: {cfg['name']}，使用模型: {cfg['model_id']}")
+        agents[cfg["name"]] = EmergentAgentV3(
             name=cfg["name"],
-            model=models[cfg["model_id"]],
-            base_prompt_cost=cfg.get("compute", 100)
+            model_config=models_config[cfg["model_id"]]
         )
+        logger.info(f"AI代理 {cfg['name']} 创建完成")
 
-    # 创建 Shelter
-    shelter_instance = Shelter(
-        ai_agents_dict=agents,
-        total_tokens=config["shelter"]["total_tokens"],
-        debug=True
+    # 创建 EmergentShelterV3
+    ai_names = list(agents.keys())
+    shelter_instance = EmergentShelterV3(
+        ai_names=ai_names,
+        total_resources=config.get("shelter", {}).get("max_resource", 5000),
+        initial_health=100,
+        memory_length=5,
+        survival_cost_base=20,
+        realtime_callback=api.update_realtime_state  # 传入实时状态回调函数
     )
+
+    # 将 agents 附加到 shelter 实例
+    shelter_instance.emergent_agents = agents
+
     return shelter_instance
 
 
 # ===== Lifespan 管理 Shelter 生命周期 =====
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global shelter, _saved_shelter_state
+    global emergent_shelter, _saved_shelter_state
 
-    # 读取配置 - 使用绝对路径确保部署时也能找到
-    config_path = Path(__file__).parent.parent / "config" / "ai_config.yaml"
+    # 读取配置
+    config_path = Path(__file__).parent.parent / "config" / "emergent_config.yaml"
     example_path = Path(__file__).parent.parent / "config" / "ai_config.example.yaml"
-    
-    # 优先使用示例配置文件（部署时使用）
+
     if config_path.exists():
-        # 如果存在实际配置文件，使用它
         used_config_path = config_path
-        print("INFO: 使用实际配置文件")
+        logger.info("使用配置文件: emergent_config.yaml")
     elif example_path.exists():
-        # 如果不存在实际配置，使用示例文件
         used_config_path = example_path
-        print("INFO: 使用示例配置文件，请根据模板配置环境变量")
+        logger.info("使用示例配置文件: ai_config.example.yaml")
     else:
         raise FileNotFoundError(f"配置文件不存在: {config_path}")
-    
+
     with open(used_config_path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
-    reset_on_reload = config.get("shelter", {}).get("reset_on_reload", False)
-
-    # 初始化或恢复 shelter
-    shelter = init_shelter(used_config_path)
-
-    # 如果不重置且有保存的状态，则恢复状态
-    if not reset_on_reload and _saved_shelter_state:
-        restore_shelter_state(shelter, _saved_shelter_state)
-        print("✓ Shelter 状态已恢复 (day={}, total_tokens={})".format(
-            shelter.day, shelter.total_tokens))
-    else:
-        _saved_shelter_state = None
-        print("✓ Shelter 初始化完成 (reset_on_reload={})".format(reset_on_reload))
-
-    api.shelter = shelter  # 注入到 API 模块
+    logger.info("启动避难所模拟系统")
+    emergent_shelter = init_shelter(used_config_path)
+    api.emergent_shelter = emergent_shelter
 
     yield
 
     # 关闭前保存状态
-    _saved_shelter_state = save_shelter_state(shelter)
-    print("✓ Shelter 状态已保存 (day={}, total_tokens={})".format(
-        shelter.day, shelter.total_tokens))
-
+    _saved_shelter_state = emergent_shelter.get_current_state()
+    logger.info("状态已保存")
 
 
 middleware = [
@@ -223,31 +163,40 @@ class NoCacheStaticFiles(StarletteStaticFiles):
     
     async def get_response(self, path: str, scope):
         response = await super().get_response(path, scope)
-        # 添加缓存控制头，禁用浏览器缓存
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
         return response
 
 
+
+
 # ===== 前端静态文件服务 =====
-# 前端构建后的文件在 shelter-ui/build 目录
-frontend_build_path = Path(__file__).parent.parent / "shelter-ui" / "build"
+frontend_build_path = Path(__file__).parent.parent / "shelter_ui" / "build"
+vite_build_path = Path(__file__).parent.parent / "shelter_ui" / "dist"
 
+# 支持两种构建目录：build（Create React App）和 dist（Vite）
 if frontend_build_path.exists():
-    # 挂载静态文件（使用自定义的 NoCacheStaticFiles）
-    app.mount("/static", NoCacheStaticFiles(directory=str(frontend_build_path / "static")), name="static")
+    static_path = frontend_build_path
+elif vite_build_path.exists():
+    static_path = vite_build_path
+else:
+    static_path = None
 
-    # 前端路由:所有非API请求都返回index.html
+if static_path:
+    # Vite 的静态文件在 assets 目录，Create React App 在 static 目录
+    assets_dir = static_path / "assets" if (static_path / "assets").exists() else static_path / "static"
+    if assets_dir.exists():
+        app.mount("/static", NoCacheStaticFiles(directory=str(assets_dir)), name="static")
+
     @app.get("/")
     @app.get("/day/{path:path}")
     @app.get("/ai/{path:path}")
     async def serve_frontend():
-        response = FileResponse(str(frontend_build_path / "index.html"))
-        # 添加缓存控制头
+        response = FileResponse(str(static_path / "index.html"))
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
         return response
 else:
-    print("警告:前端构建文件不存在,请先运行 'npm run build' 在 shelter-ui 目录下")
+    logger.warning("前端构建文件不存在,请先运行 'npm run build' 在 shelter_ui 目录下")

@@ -34,7 +34,7 @@ python start_app.py
 1. **安装标记**: `.installed` 标记文件是否存在
 2. **虚拟环境**: `.venv` 目录是否存在
 3. **Python依赖**: 是否安装了 `fastapi`, `uvicorn`, `yaml` 等核心包
-4. **前端依赖**: `shelter-ui/node_modules` 是否存在
+4. **前端依赖**: `shelter_ui/node_modules` 是否存在
 
 ### 安装标记
 安装完成后会创建 `.installed` 标记文件，后续启动时检测到此文件会跳过安装步骤。
@@ -59,7 +59,7 @@ pip install -r requirements.txt
 
 ### 3. 前端依赖安装
 ```bash
-cd shelter-ui
+cd shelter_ui
 npm install
 ```
 
@@ -76,7 +76,7 @@ npm install
 .venv/Scripts/python -c "import fastapi, uvicorn, yaml"
 
 # 验证前端依赖
-cd shelter-ui && npm list
+cd shelter_ui && npm list
 ```
 
 ### 启动验证
@@ -112,7 +112,7 @@ pip install -r requirements.txt
 
 **前端依赖安装失败：**
 ```bash
-cd shelter-ui
+cd shelter_ui
 
 # 清理缓存
 npm cache clean --force

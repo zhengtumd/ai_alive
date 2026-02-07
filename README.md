@@ -1,6 +1,8 @@
 # AI Shelter - 智能AI对话平台
 
-![AI Shelter Demo](docs/example_v1.gif)
+![AI Decision Example](docs/ai-decision-example.jpg)
+
+![AI Voting System](docs/ai-voting-system-example.jpg)
 
 AI Shelter 是一个现代化的智能AI对话平台，支持多种AI模型（ChatGPT、Gemini、DeepSeek等），提供友好的用户界面和灵活的部署选项。
 
@@ -40,6 +42,34 @@ python start_app.py
 **说明：**
 - **UV**：极速依赖管理，推荐使用
 - **传统方式**：兼容性更好，适合所有环境
+
+## ⚙️ 配置说明
+
+### AI 模型配置
+
+项目使用 `config/emergent_config.yaml` 配置 AI 模型的 API 密钥。
+
+**首次使用步骤：**
+```bash
+# 1. 复制配置模板
+cp config/emergent_config.yaml.example config/emergent_config.yaml
+
+# 2. 编辑配置文件，填入你的 API 密钥
+# 替换以下占位符：
+# - YOUR_CHATGPT_API_KEY_HERE
+# - YOUR_GEMINI_API_KEY_HERE
+# - YOUR_DEEPSEEK_API_KEY_HERE
+# - YOUR_DOUBAO_API_KEY_HERE
+# - YOUR_QWEN_API_KEY_HERE
+
+# 3. 启动应用
+uv run start-shelter
+```
+
+**配置说明：**
+- 所有 API 密钥配置在 `models` 部分下
+- 支持环境变量配置（如 `${API_KEY:-default_value}`）
+- 未配置的 AI 模型将自动跳过
 
 ## 📚 详细文档
 

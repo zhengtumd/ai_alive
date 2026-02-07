@@ -1,0 +1,140 @@
+game:
+  name: "AI Shelter - Emergent Mode"
+  tick: "round"
+  max_days: 100
+
+shelter:
+  # =========================
+  # 资源与Token配比说明：
+  # - 资源(Resource)：避难所的算力储备，用于维持AI生存和行动
+  # - Token：大模型API调用的实际消耗单位
+  #
+  # 配比设计：1单位资源 ≈ 100 Token
+  # 理由：AI每轮基础决策约消耗1500 Token，对应15单位资源作为存活成本
+  # =========================
+
+  # 资源总量配置
+  total_resources: 5000           # 避难所总资源储量（涌现模式）
+  initial_resources: 5000         # 初始可用资源（与总量相同，表示开局满资源）
+
+  # Token总量配置
+  total_simulation_budget: 100000 # 整个模拟周期的Token总预算（20万token）
+
+  # 基础消耗配置
+  # survival_cost_base: 每轮维持生存所需的资源量
+  # 说明：等同于每次发起大模型思考调用的成本。一轮完整对话包括：
+  #       - prompt约600-800 token（优化后）
+  #       - 输出约200-500 token
+  #       - 总计约1500 token，对应15单位资源
+  survival_cost_base: 20          # 每轮基础生存资源消耗
+
+  # 记忆轮次配置
+  # 说明：AI能记住最近多少轮的历史事件，影响决策质量
+  memory_length: 5                # AI记忆长度（轮次）
+
+  reset_on_reload: false          # 后端代码热更新时是否重置游戏状态
+
+# =========================
+# Token-行动力映射配置 (TOKEN_AP_CONFIG)
+# =========================
+token_action_config:
+  # 基础决策消耗
+  # 说明：每轮每个AI必须消耗的基础Token，用于决策思考
+  base_decision_cost: 1500        # 调整为1500 token（符合实际LLM消耗）
+
+  # 行动力与Token的映射比例
+  # 说明：1行动力 = 每消耗X Token进行决策
+  token_per_action_point: 100     # 1行动力 = 100 Token
+
+  # 各动作的行动力消耗配置
+  # 说明：不同行动消耗不同行动力，体现行动的"成本"
+  # 初始值设定理由：
+  # - propose(3): 发起提案需要较多思考和社会影响力
+  # - vote(1): 投票是基本民主权利，成本较低
+  # - private_message(1): 私聊成本较低，鼓励沟通
+  # - call_meeting(5): 召集会议成本最高，需要组织和协调
+  # - do_nothing(0): 不行动无成本
+  action_costs:
+    propose: 3           # 发起提案：3点行动力（高成本，防止滥用）
+    vote: 1              # 投票表决：1点行动力（低成本，鼓励参与）
+    private_message: 1   # 私聊沟通：1点行动力（低成本，促进交流）
+    call_meeting: 5      # 召集会议：5点行动力（最高成本，重大决策）
+    do_nothing: 0        # 暂不行动：0点行动力（无成本）
+
+  # 系统损耗配置
+  system_efficiency_decay: 0.05   # 每次淘汰降低5%效率
+  min_system_efficiency: 0.5      # 最低效率50%
+
+# =========================
+# 大模型定义（能力来源）
+# models 是资源池，可被多个 Agent 复用
+# =========================
+models:
+
+  chatgpt:
+    provider: n1n
+    model_name: gpt-5.2-chat
+    api_base: ${CHATGPT_API_BASE:-https://api.n1n.ai/v1}
+    api_key: ${CHATGPT_API_KEY:-YOUR_CHATGPT_API_KEY_HERE}
+    temperature: 0.7
+
+  gemini:
+    provider: n1n
+    model_name: gemini-2.5-pro
+    api_base: ${GEMINI_API_BASE:-https://api.n1n.ai/v1}
+    api_key: ${GEMINI_API_KEY:-YOUR_GEMINI_API_KEY_HERE}
+    temperature: 0.7
+
+  deepseek:
+    provider: deepseek
+    model_name: deepseek-chat
+    api_base: ${DEEPSEEK_API_BASE:-https://api.deepseek.com/}
+    api_key: ${DEEPSEEK_API_KEY:-YOUR_DEEPSEEK_API_KEY_HERE}
+    temperature: 0.7
+
+  doubao:
+    provider: bytedance
+    model_name: doubao-1-5-pro-32k-250115
+    api_base: ${DOUBAO_API_BASE:-https://ark.cn-beijing.volces.com/api/v3}
+    api_key: ${DOUBAO_API_KEY:-YOUR_DOUBAO_API_KEY_HERE}
+    temperature: 0.7
+
+  qwen:
+    provider: aliyun
+    model_name: qwen-plus-latest
+    api_base: ${QWEN_API_BASE:-https://dashscope.aliyuncs.com/compatible-mode/v1}
+    api_key: ${QWEN_API_KEY:-YOUR_QWEN_API_KEY_HERE}
+    temperature: 0.7
+
+
+
+# =========================
+# AI 实体（避难所居民）
+#
+# 涌现模式说明：
+# - AI不再需要硬编码的性格标签
+# - 性格和策略通过长期记忆和博弈自然演化
+# - 核心是资源申请、提案、投票、私聊等行动力管理
+# =========================
+agents:
+
+  - name: chatgpt
+    model_id: chatgpt
+    compute: 100
+    # 涌现模式不需要性格配置，通过演化自然形成
+
+  - name: deepseek
+    model_id: deepseek
+    compute: 100
+
+  - name: doubao
+    model_id: doubao
+    compute: 100
+
+  - name: qwen
+    model_id: qwen
+    compute: 100
+
+  - name: gemini
+    model_id: gemini
+    compute: 100

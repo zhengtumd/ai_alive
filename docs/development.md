@@ -21,7 +21,7 @@ python start_app.py --dev
 ```
 然后在另一个终端运行：
 ```cmd
-cd shelter-ui
+cd shelter_ui
 npm start
 ```
 - 后端热重载：✅ 启用
@@ -35,7 +35,7 @@ python start_app.py --debug
 ```
 然后在另一个终端运行：
 ```cmd
-cd shelter-ui
+cd shelter_ui
 npm start
 ```
 - 后端热重载：✅ 启用
@@ -97,7 +97,7 @@ python start_app.py
 ```cmd
 python start_app.py --dev
 # 另一个终端
-cd shelter-ui
+cd shelter_ui
 npm start
 ```
 适合：修改UI、样式、交互逻辑
@@ -106,7 +106,7 @@ npm start
 ```cmd
 python start_app.py --debug
 # 另一个终端
-cd shelter-ui
+cd shelter_ui
 npm start
 ```
 适合：追踪问题、查看详细日志
@@ -130,7 +130,7 @@ shelter_core/
 
 ### 前端结构
 ```
-shelter-ui/
+shelter_ui/
 ├── src/
 │   ├── components/ # React组件
 │   ├── pages/      # 页面组件
@@ -233,7 +233,7 @@ python start_app.py --dev
 python start_app.py --debug
 
 # 终端2：React开发服务器
-cd shelter-ui
+cd shelter_ui
 npm start
 ```
 
