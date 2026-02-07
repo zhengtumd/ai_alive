@@ -233,7 +233,7 @@ if static_path:
     # Vite 的静态文件在 assets 目录，Create React App 在 static 目录
     assets_dir = static_path / "assets" if (static_path / "assets").exists() else static_path / "static"
     if assets_dir.exists():
-        app.mount("/static", NoCacheStaticFiles(directory=str(assets_dir)), name="static")
+        app.mount("/assets", NoCacheStaticFiles(directory=str(assets_dir)), name="assets")
 
     @app.get("/")
     @app.get("/day/{path:path}")
