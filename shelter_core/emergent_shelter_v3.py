@@ -4,12 +4,10 @@ Emergent Shelter v3 - Token-行动力明确映射版本
 1. 明确Token消耗与行动力的映射关系
 2. 提案投票规则清晰化
 3. 投票影响的逻辑明确化
-4. 配置从YAML文件加载
+4. 配置从外部传入（app.py 统一加载）
 """
 import random
 import time
-import yaml
-import os
 from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 from shelter_core.shelter_logging import get_logger
@@ -18,42 +16,20 @@ from shelter_core.shelter_logging import get_logger
 logger = get_logger(__name__)
 
 
-def load_emergent_config():
-    """从YAML文件加载涌现模式配置
+# 全局配置（由 app.py 设置）
+_EMERGENT_CONFIG = None
 
-    加载优先级：
-    1. emergent_config.yaml
-    2. emergent_config.yaml.example
-    3. 使用默认配置
-    """
-    config_dir = os.path.join(os.path.dirname(__file__), '..', 'config')
-    config_path = os.path.join(config_dir, 'emergent_config.yaml')
-    example_path = os.path.join(config_dir, 'emergent_config.yaml.example')
 
-    # 尝试加载主配置文件
-    if os.path.exists(config_path):
-        try:
-            with open(config_path, 'r', encoding='utf-8') as f:
-                config = yaml.safe_load(f)
-            logger.info(f"✓ 成功加载涌现模式配置文件: {config_path}")
-            return config
-        except Exception as e:
-            logger.warning(f"✗ 加载配置文件失败: {e}")
+def set_config(config):
+    """设置配置（由 app.py 调用）"""
+    global _EMERGENT_CONFIG
+    _EMERGENT_CONFIG = config
+    logger.info("✓ 配置已设置")
 
-    # 尝试加载示例配置文件
-    if os.path.exists(example_path):
-        try:
-            with open(example_path, 'r', encoding='utf-8') as f:
-                config = yaml.safe_load(f)
-            logger.info(f"✓ 成功加载涌现模式示例配置文件: {example_path}")
-            return config
-        except Exception as e:
-            logger.warning(f"✗ 加载示例配置文件失败: {e}")
 
-    # 都不存在，返回 None 使用默认配置
-    logger.warning(f"✗ 配置文件不存在，使用默认配置")
-    logger.warning(f"   期望路径: {config_path} 或 {example_path}")
-    return None
+def get_config():
+    """获取当前配置"""
+    return _EMERGENT_CONFIG
 
 
 def get_config_value(config, *keys, default=None):
@@ -69,61 +45,52 @@ def get_config_value(config, *keys, default=None):
     return value
 
 
-# 加载配置
-_EMERGENT_CONFIG = load_emergent_config()
-
 # ===== Token-行动力映射配置 =====
-# 从配置文件加载，若失败则使用默认值
-TOKEN_AP_CONFIG = {
-    # 模拟周期总Token预算（整个模拟的全局预算，非单轮预算）
-    "total_simulation_budget": get_config_value(
-        _EMERGENT_CONFIG, 'shelter', 'total_simulation_budget', 
-        default=200000
-    ),
-
-    # 基础决策消耗（每轮每个AI必须消耗）
-    # 基于一轮完整对话：prompt约600-800 token（优化后）+ 输出约200-500 token
-    "base_decision_cost": get_config_value(
-        _EMERGENT_CONFIG, 'token_action_config', 'base_decision_cost',
-        default=1500
-    ),
-
-    # 行动力与Token的映射
-    # 1行动力 = 每消耗100 token决策
-    "token_per_action_point": get_config_value(
-        _EMERGENT_CONFIG, 'token_action_config', 'token_per_action_point',
-        default=100
-    ),
-
-    # 各动作的行动力消耗
-    "action_costs": get_config_value(
-        _EMERGENT_CONFIG, 'token_action_config', 'action_costs',
-        default={
-            "propose": 3,
-            "vote": 1,
-            "private_message": 1,
-            "call_meeting": 5,
-            "do_nothing": 0
-        }
-    ),
-
-    # 系统损耗配置
-    "system_efficiency_decay": get_config_value(
-        _EMERGENT_CONFIG, 'token_action_config', 'system_efficiency_decay',
-        default=0.05
-    ),
-    "min_system_efficiency": get_config_value(
-        _EMERGENT_CONFIG, 'token_action_config', 'min_system_efficiency',
-        default=0.5
-    )
-}
-
-logger.info(f"Token-行动力配置加载完成: {TOKEN_AP_CONFIG}")
-
-
 def get_token_ap_config():
-    """获取Token-行动力配置"""
-    return TOKEN_AP_CONFIG
+    """获取Token-行动力配置（从全局配置中读取）"""
+    return {
+        # 模拟周期总Token预算（整个模拟的全局预算，非单轮预算）
+        "total_simulation_budget": get_config_value(
+            _EMERGENT_CONFIG, 'shelter', 'total_simulation_budget', 
+            default=200000
+        ),
+
+        # 基础决策消耗（每轮每个AI必须消耗）
+        # 基于一轮完整对话：prompt约600-800 token（优化后）+ 输出约200-500 token
+        "base_decision_cost": get_config_value(
+            _EMERGENT_CONFIG, 'token_action_config', 'base_decision_cost',
+            default=1500
+        ),
+
+        # 行动力与Token的映射
+        # 1行动力 = 每消耗100 token决策
+        "token_per_action_point": get_config_value(
+            _EMERGENT_CONFIG, 'token_action_config', 'token_per_action_point',
+            default=100
+        ),
+
+        # 各动作的行动力消耗
+        "action_costs": get_config_value(
+            _EMERGENT_CONFIG, 'token_action_config', 'action_costs',
+            default={
+                "propose": 3,
+                "vote": 1,
+                "private_message": 1,
+                "call_meeting": 5,
+                "do_nothing": 0
+            }
+        ),
+
+        # 系统损耗配置
+        "system_efficiency_decay": get_config_value(
+            _EMERGENT_CONFIG, 'token_action_config', 'system_efficiency_decay',
+            default=0.05
+        ),
+        "min_system_efficiency": get_config_value(
+            _EMERGENT_CONFIG, 'token_action_config', 'min_system_efficiency',
+            default=0.5
+        )
+    }
 
 
 def get_shelter_config():
@@ -215,7 +182,7 @@ class EmergentShelterV3:
 
         # 全局Token消耗跟踪（避免认知错误）
         self.global_token_consumed = 0  # 整个模拟已消耗的Token
-        self.total_simulation_budget = TOKEN_AP_CONFIG["total_simulation_budget"]  # 总预算
+        self.total_simulation_budget = get_token_ap_config()["total_simulation_budget"]  # 总预算
         
         # AI决策逻辑存储（用于前端展示）
         self.ai_decisions: Dict[str, dict] = {name: {} for name in ai_names}
@@ -287,11 +254,11 @@ class EmergentShelterV3:
             "total_simulation_budget": self.total_simulation_budget,  # 总预算
             "token_budget_remaining": max(0, self.total_simulation_budget - self.global_token_consumed),  # 剩余预算
             "token_config": {
-                "base_decision_cost": TOKEN_AP_CONFIG["base_decision_cost"],
-                "token_per_action_point": TOKEN_AP_CONFIG["token_per_action_point"],
-                "action_costs": TOKEN_AP_CONFIG["action_costs"],
-                "efficiency_decay": TOKEN_AP_CONFIG["system_efficiency_decay"],
-                "min_efficiency": TOKEN_AP_CONFIG["min_system_efficiency"]
+                "base_decision_cost": get_token_ap_config()["base_decision_cost"],
+                "token_per_action_point": get_token_ap_config()["token_per_action_point"],
+                "action_costs": get_token_ap_config()["action_costs"],
+                "efficiency_decay": get_token_ap_config()["system_efficiency_decay"],
+                "min_efficiency": get_token_ap_config()["min_system_efficiency"]
             }
         }
 
@@ -437,7 +404,7 @@ class EmergentShelterV3:
             logger.info(f"  [{name}] 申请资源: {request_amount}, 新增行动力: {new_action_points_from_request}, 继承行动力: {carried_over_ap}, 总行动力: {temp_ap_for_log}")
 
             # 记录基础决策Token消耗
-            base_tokens = TOKEN_AP_CONFIG["base_decision_cost"]
+            base_tokens = get_token_ap_config()["base_decision_cost"]
             self.token_consumed[name] = base_tokens
             total_token_consumed += base_tokens
             
@@ -606,7 +573,7 @@ class EmergentShelterV3:
                         break
 
                     action_type = individual_action.get("type")
-                    action_cost = TOKEN_AP_CONFIG["action_costs"].get(action_type, 0)
+                    action_cost = get_token_ap_config()["action_costs"].get(action_type, 0)
 
                     if ap < action_cost:
                         continue
@@ -624,7 +591,7 @@ class EmergentShelterV3:
                     time.sleep(before_action_delay)
 
                     # 执行动作并消耗Token
-                    token_cost = action_cost * TOKEN_AP_CONFIG["token_per_action_point"]
+                    token_cost = action_cost * get_token_ap_config()["token_per_action_point"]
 
                     if action_type == "propose":
                         self._handle_propose(name, individual_action, day_events, token_cost)
@@ -1066,8 +1033,8 @@ class EmergentShelterV3:
     def _apply_system_efficiency_decay(self, day_events: List[dict]):
         """应用系统损耗"""
         old_efficiency = self.system_efficiency
-        decay = TOKEN_AP_CONFIG["system_efficiency_decay"]
-        min_efficiency = TOKEN_AP_CONFIG["min_system_efficiency"]
+        decay = get_token_ap_config()["system_efficiency_decay"]
+        min_efficiency = get_token_ap_config()["min_system_efficiency"]
 
 
         # 每次淘汰降低系统效率

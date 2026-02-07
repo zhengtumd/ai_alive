@@ -17,6 +17,7 @@ from shelter_core.emergent_agent_v3 import EmergentAgentV3
 from shelter_core.shelter_logging import get_logger
 
 from shelter_app import api
+from shelter_core import emergent_shelter_v3
 
 # 获取日志记录器
 logger = get_logger(__name__)
@@ -118,6 +119,9 @@ def init_shelter(config_path: str = None, config: dict = None) -> EmergentShelte
             config = yaml.safe_load(f)
 
         config = expand_env_vars(config)
+
+    # 设置全局配置到 emergent_shelter_v3 模块
+    emergent_shelter_v3.set_config(config)
 
     # 创建模型配置字典
     models_config = {mid: cfg for mid, cfg in config["models"].items()}
