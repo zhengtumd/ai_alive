@@ -30,13 +30,22 @@ _saved_shelter_state = None
 
 def expand_env_vars(obj):
     """
-    递归展开对象中的环境变量（${VAR_NAME:-default_value} 格式）
+    递归展开对象中的环境变量
+
+    支持两种格式：
+    1. ${VAR_NAME:-default_value} - 标准环境变量语法，优先使用环境变量
+    2. YOUR_API_KEY_HERE - 占位符格式，如果匹配环境变量则使用
+
+    示例：
+    - ${CHATGPT_API_KEY:-YOUR_CHATGPT_API_KEY_HERE}
+    - YOUR_CHATGPT_API_KEY_HERE（如果存在 CHATGPT_API_KEY 环境变量则使用）
     """
     if isinstance(obj, dict):
         return {k: expand_env_vars(v) for k, v in obj.items()}
     elif isinstance(obj, list):
         return [expand_env_vars(item) for item in obj]
     elif isinstance(obj, str):
+        # 先处理 ${VAR_NAME:-default_value} 格式
         def replace_env_var(match):
             full_match = match.group(1)
             if ':-' in full_match:
@@ -53,7 +62,38 @@ def expand_env_vars(obj):
                     logger.warning(f"环境变量 {var_name} 未设置且没有默认值")
                 return default_value
             return env_value
-        return re.sub(r'\$\{([^}]+)\}', replace_env_var, obj)
+
+        result = re.sub(r'\$\{([^}]+)\}', replace_env_var, obj)
+
+        # 处理常见的占位符格式
+        # 匹配模式：YOUR_*_KEY_HERE, YOUR_*_API_KEY_HERE, YOUR_*_BASE_HERE 等
+        placeholder_patterns = [
+            r'YOUR_([A-Z_]+)_KEY_HERE',
+            r'YOUR_([A-Z_]+)_API_KEY_HERE',
+            r'YOUR_([A-Z_]+)_BASE_HERE',
+            r'YOUR_([A-Z_]+)_API_BASE_HERE',
+        ]
+
+        for pattern in placeholder_patterns:
+            def try_env_from_placeholder(match):
+                # 构造环境变量名，例如 CHATGPT_API_KEY
+                model_name = match.group(1)
+                if 'API_KEY' in pattern:
+                    env_var_name = f"{model_name}_API_KEY"
+                elif 'BASE' in pattern or 'API_BASE' in pattern:
+                    env_var_name = f"{model_name}_API_BASE"
+                else:
+                    env_var_name = f"{model_name}_KEY"
+
+                env_value = os.getenv(env_var_name)
+                if env_value:
+                    logger.info(f"从环境变量 {env_var_name} 获取值替换占位符 {match.group(0)}")
+                    return env_value
+                return match.group(0)  # 如果没有环境变量，保持原值
+
+            result = re.sub(pattern, try_env_from_placeholder, result)
+
+        return result
     else:
         return obj
 
@@ -63,14 +103,16 @@ def init_shelter(config_path: str = None, config: dict = None) -> EmergentShelte
     if config is None:
         base_dir = Path(__file__).parent.parent
         config_path = base_dir / "config" / "emergent_config.yaml"
-        example_path = base_dir / "config" / "ai_config.example.yaml"
+        example_path = base_dir / "config" / "emergent_config.yaml.example"
 
         if not config_path.exists():
             if example_path.exists():
                 config_path = example_path
-                logger.info("使用示例配置文件")
+                logger.info("使用示例配置文件: emergent_config.yaml.example")
             else:
                 raise FileNotFoundError(f"配置文件不存在: {config_path}")
+        else:
+            logger.info("使用配置文件: emergent_config.yaml")
 
         with open(config_path, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
@@ -114,14 +156,14 @@ async def lifespan(app: FastAPI):
 
     # 读取配置
     config_path = Path(__file__).parent.parent / "config" / "emergent_config.yaml"
-    example_path = Path(__file__).parent.parent / "config" / "ai_config.example.yaml"
+    example_path = Path(__file__).parent.parent / "config" / "emergent_config.yaml.example"
 
     if config_path.exists():
         used_config_path = config_path
         logger.info("使用配置文件: emergent_config.yaml")
     elif example_path.exists():
         used_config_path = example_path
-        logger.info("使用示例配置文件: ai_config.example.yaml")
+        logger.info("使用示例配置文件: emergent_config.yaml.example")
     else:
         raise FileNotFoundError(f"配置文件不存在: {config_path}")
 
