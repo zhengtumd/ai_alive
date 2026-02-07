@@ -19,16 +19,41 @@ logger = get_logger(__name__)
 
 
 def load_emergent_config():
-    """从YAML文件加载涌现模式配置"""
-    config_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'emergent_config.yaml')
-    try:
-        with open(config_path, 'r', encoding='utf-8') as f:
-            config = yaml.safe_load(f)
-        logger.info(f"✓ 成功加载涌现模式配置文件: {config_path}")
-        return config
-    except Exception as e:
-        logger.error(f"✗ 加载配置文件失败: {e}，使用默认配置")
-        return None
+    """从YAML文件加载涌现模式配置
+
+    加载优先级：
+    1. emergent_config.yaml
+    2. emergent_config.yaml.example
+    3. 使用默认配置
+    """
+    config_dir = os.path.join(os.path.dirname(__file__), '..', 'config')
+    config_path = os.path.join(config_dir, 'emergent_config.yaml')
+    example_path = os.path.join(config_dir, 'emergent_config.yaml.example')
+
+    # 尝试加载主配置文件
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = yaml.safe_load(f)
+            logger.info(f"✓ 成功加载涌现模式配置文件: {config_path}")
+            return config
+        except Exception as e:
+            logger.warning(f"✗ 加载配置文件失败: {e}")
+
+    # 尝试加载示例配置文件
+    if os.path.exists(example_path):
+        try:
+            with open(example_path, 'r', encoding='utf-8') as f:
+                config = yaml.safe_load(f)
+            logger.info(f"✓ 成功加载涌现模式示例配置文件: {example_path}")
+            return config
+        except Exception as e:
+            logger.warning(f"✗ 加载示例配置文件失败: {e}")
+
+    # 都不存在，返回 None 使用默认配置
+    logger.warning(f"✗ 配置文件不存在，使用默认配置")
+    logger.warning(f"   期望路径: {config_path} 或 {example_path}")
+    return None
 
 
 def get_config_value(config, *keys, default=None):
