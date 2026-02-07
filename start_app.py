@@ -510,10 +510,11 @@ def install_dependencies():
         backend_port = os.getenv("BACKEND_PORT", "8000")
         build_env["VITE_BACKEND_PORT"] = backend_port
         
-        # 优先使用用户自定义的 VITE_API_BASE_URL，否则根据端口生成默认值
+        # 优先使用用户自定义的 VITE_API_BASE_URL，否则生产环境使用空字符串（相对路径）
         if "VITE_API_BASE_URL" not in os.environ:
-            build_env["VITE_API_BASE_URL"] = f"http://localhost:{backend_port}"
-            print_info(f"设置默认 API 地址: http://localhost:{backend_port}")
+            # 生产环境默认使用空字符串，前端将使用相对路径访问当前域名
+            build_env["VITE_API_BASE_URL"] = ""
+            print_info("生产环境: 未设置 VITE_API_BASE_URL，使用相对路径（前端访问当前域名）")
         else:
             print_info(f"使用自定义 API 地址: {os.environ['VITE_API_BASE_URL']}")
 

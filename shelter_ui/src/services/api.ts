@@ -9,7 +9,8 @@ const getApiBaseUrl = (): string => {
   }
   
   // 生产环境：优先使用 VITE_API_BASE_URL 环境变量
-  if (import.meta.env.VITE_API_BASE_URL) {
+  // 检查是否定义了 VITE_API_BASE_URL（包括空字符串）
+  if (import.meta.env.VITE_API_BASE_URL !== undefined) {
     return import.meta.env.VITE_API_BASE_URL;
   }
   // 其次使用 VITE_BACKEND_PORT 构建本地地址
